@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
@@ -16,12 +17,14 @@ type InternalPriceEstimatePanelProps = {
   businessName: string;
   /** Raw JSON from Supabase — parsed client-side */
   stored: unknown;
+  pricingEngineEnabled: boolean;
 };
 
 export function InternalPriceEstimatePanel({
   intakeId,
   businessName,
   stored,
+  pricingEngineEnabled,
 }: InternalPriceEstimatePanelProps) {
   const router = useRouter();
   const estimate = parseStoredPriceEstimate(stored);
@@ -30,6 +33,9 @@ export function InternalPriceEstimatePanel({
   const [pending, run] = useTransition();
 
   function handleRegenerate() {
+    if (!pricingEngineEnabled) {
+      return;
+    }
     setError(null);
     setCopyMessage(null);
     run(async () => {
@@ -43,6 +49,9 @@ export function InternalPriceEstimatePanel({
   }
 
   async function handleCopy() {
+    if (!pricingEngineEnabled) {
+      return;
+    }
     if (!estimate) {
       return;
     }
@@ -72,13 +81,22 @@ export function InternalPriceEstimatePanel({
             Studio-only sizing from intake text — never expose to applicants. Uses keyword + page-count heuristics;
             sanity-check live before quoting.
           </p>
+          {!pricingEngineEnabled ? (
+            <p className="max-w-xl text-sm leading-relaxed text-amber-200/90">
+              Not available on Basic.{" "}
+              <Link href="/admin/billing" className="font-semibold text-[var(--color-accent)] underline-offset-4 hover:underline">
+                Upgrade under Plan & billing
+              </Link>
+              .
+            </p>
+          ) : null}
         </div>
         <div className="flex w-full shrink-0 flex-col gap-2 sm:flex-row lg:w-auto">
           <Button
             type="button"
             variant="secondary"
             className="justify-center border border-white/[0.16] px-5 text-white hover:bg-white/10"
-            disabled={pending || !estimate}
+            disabled={pending || !estimate || !pricingEngineEnabled}
             onClick={() => void handleCopy()}
           >
             Copy estimate
@@ -87,7 +105,7 @@ export function InternalPriceEstimatePanel({
             type="button"
             variant="primary"
             className="justify-center px-5"
-            disabled={pending}
+            disabled={pending || !pricingEngineEnabled}
             onClick={() => handleRegenerate()}
           >
             {pending ? "Saving…" : estimate ? "Regenerate estimate" : "Generate estimate"}
@@ -107,7 +125,9 @@ export function InternalPriceEstimatePanel({
 
       {!estimate ? (
         <p className="mt-8 rounded-2xl border border-dashed border-white/[0.12] px-5 py-8 text-center text-sm text-white/62">
-          No estimate stored yet — generate once to baseline this submission.
+          {pricingEngineEnabled
+            ? "No estimate stored yet — generate once to baseline this submission."
+            : "Upgrade to Professional to generate heuristic studio estimates."}
         </p>
       ) : (
         <div className="mt-10 space-y-8">

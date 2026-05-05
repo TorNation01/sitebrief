@@ -1,9 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 
 import {
   buildIntakePayload,
+  intakeFormHoneypotWasTriggered,
   intakeFormSchemaWithHoneypot,
   sanitizeIntakeSelections,
   stripIntakeFormHoneypot,
@@ -11,19 +13,22 @@ import {
 import { notifyIntakeSubmissionEmails } from "@/lib/email/intake-submission-mail";
 import { getSupabasePublicEnv } from "@/lib/env";
 import { insertWebsiteIntakeSubmission } from "@/lib/sitebrief/mutations";
+import { peekStudioMonthlyIntakeAllowance } from "@/lib/sitebrief/studio-subscription";
+import {
+  extractClientIp,
+  hashClientIpSalted,
+  peekPublicSubmissionQuota,
+  recordPublicSubmissionQuota,
+  SITE_BRIEF_RATE_LIMIT_MESSAGE,
+  SITE_BRIEF_SUBMISSION_BLOCKED,
+  submissionsLooksLikeBot,
+} from "@/lib/sitebrief/submission-protection";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
-const SPAM_RESPONSE =
-  "This submission could not be verified. Reload the page, avoid autofill extensions on optional fields, and try again.";
+const SPAM_RESPONSE = SITE_BRIEF_SUBMISSION_BLOCKED;
 
 const GENERIC_FAILURE =
   "We could not save your brief. Check highlighted fields, wait a moment, and try again.";
-
-function isHoneypotIssue(
-  issues: readonly { readonly path?: readonly PropertyKey[] }[],
-): boolean {
-  return issues.some((issue) => issue.path?.[0] === "hp_company_url");
-}
 
 export async function submitWebsiteIntakeAction(
   payload: unknown,
@@ -37,9 +42,21 @@ export async function submitWebsiteIntakeAction(
     };
   }
 
+  const headerList = await headers();
+  const ipHash = hashClientIpSalted(extractClientIp(headerList));
+  const quota = await peekPublicSubmissionQuota(ipHash, "intake");
+  if (!quota.ok) {
+    return { ok: false, error: SITE_BRIEF_RATE_LIMIT_MESSAGE };
+  }
+
+  const monthly = await peekStudioMonthlyIntakeAllowance();
+  if (!monthly.ok) {
+    return { ok: false, error: monthly.message };
+  }
+
   const parsed = intakeFormSchemaWithHoneypot.safeParse(payload);
   if (!parsed.success) {
-    if (isHoneypotIssue(parsed.error.issues)) {
+    if (intakeFormHoneypotWasTriggered(parsed.error.issues)) {
       return { ok: false, error: SPAM_RESPONSE };
     }
     return {
@@ -52,18 +69,31 @@ export async function submitWebsiteIntakeAction(
   const sanitized = sanitizeIntakeSelections(parsed.data);
   const rechecked = intakeFormSchemaWithHoneypot.safeParse(sanitized);
   if (!rechecked.success) {
-    if (isHoneypotIssue(rechecked.error.issues)) {
+    if (intakeFormHoneypotWasTriggered(rechecked.error.issues)) {
       return { ok: false, error: SPAM_RESPONSE };
     }
     return { ok: false, error: GENERIC_FAILURE };
   }
 
-  const dbPayload = buildIntakePayload(stripIntakeFormHoneypot(rechecked.data));
+  const clean = stripIntakeFormHoneypot(rechecked.data);
+  if (
+    submissionsLooksLikeBot(headerList, {
+      email: clean.email,
+      contactOrName: clean.contact_name,
+      organization: clean.business_name,
+    })
+  ) {
+    return { ok: false, error: SPAM_RESPONSE };
+  }
+
+  const dbPayload = buildIntakePayload(clean);
 
   try {
     const supabase = await createSupabaseServerClient();
     const { intakeId } = await insertWebsiteIntakeSubmission(supabase, dbPayload);
     revalidatePath("/admin");
+
+    void recordPublicSubmissionQuota(ipHash, "intake");
 
     void notifyIntakeSubmissionEmails({
       intakeId,

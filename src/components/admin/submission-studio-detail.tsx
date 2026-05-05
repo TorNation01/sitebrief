@@ -2,17 +2,26 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { CopyClientBriefButton } from "@/components/admin/copy-client-brief-button";
+import { ExportFullPackToolbar } from "@/components/admin/export-full-pack-toolbar";
+import { IntakeDecisionPanel } from "@/components/admin/intake-decision-panel";
 import { InternalPriceEstimatePanel } from "@/components/admin/internal-price-estimate-panel";
 import { PromptPackWorkbench } from "@/components/admin/prompt-pack-workbench";
 import { SUBMISSION_FIELD_BLUEPRINT } from "@/components/admin/submission-detail-matrix";
 import { SubmissionNoteComposer } from "@/components/admin/submission-note-composer";
 import { SubmissionStatusSwitcher } from "@/components/admin/submission-status-switcher";
+import { buildFullClientPackMarkdown, sanitizePackFileStem } from "@/lib/sitebrief/build-full-client-pack-md";
 import { coerceWorkflowStatus, isWorkflowStatus } from "@/lib/sitebrief/workflow-status";
 import type { AdminNoteRow, WebsiteIntakeWithClientRow } from "@/types/database";
+import {
+  canExportFullClientPack,
+  canUseInternalPricingEngine,
+  type SubscriptionTier,
+} from "@/types/subscription";
 
 type SubmissionStudioDetailProps = {
   record: WebsiteIntakeWithClientRow;
   notes: AdminNoteRow[];
+  subscriptionTier: SubscriptionTier;
 };
 
 function formatTimeline(value: string) {
@@ -37,14 +46,24 @@ function renderField(value: string | null | undefined) {
   return trimmed;
 }
 
-export function SubmissionStudioDetail({ record, notes }: SubmissionStudioDetailProps) {
+export function SubmissionStudioDetail({ record, notes, subscriptionTier }: SubmissionStudioDetailProps) {
   if (!record.clients) {
     notFound();
   }
 
+  const canExportPack = canExportFullClientPack(subscriptionTier);
+  const pricingEngineEnabled = canUseInternalPricingEngine(subscriptionTier);
+
   const canonical = coerceWorkflowStatus(record.status);
 
   const selectableStatus = isWorkflowStatus(canonical) ? canonical : "New";
+
+  const fullPackMarkdown = buildFullClientPackMarkdown({
+    client: record.clients,
+    intake: record,
+    notes,
+  });
+  const packFileStem = sanitizePackFileStem(record.clients.business_name, record.id);
 
   return (
     <div className="space-y-14 text-white">
@@ -92,8 +111,15 @@ export function SubmissionStudioDetail({ record, notes }: SubmissionStudioDetail
           </div>
           <SubmissionStatusSwitcher intakeId={record.id} initialStatus={selectableStatus} />
           <CopyClientBriefButton client={record.clients} intake={record} />
+          <ExportFullPackToolbar
+            markdown={fullPackMarkdown}
+            fileStem={packFileStem}
+            canExport={canExportPack}
+          />
         </div>
       </div>
+
+      <IntakeDecisionPanel intake={record} />
 
       <PromptPackWorkbench
         key={`prompt-pack-${record.id}`}
@@ -107,6 +133,7 @@ export function SubmissionStudioDetail({ record, notes }: SubmissionStudioDetail
         intakeId={record.id}
         businessName={record.clients.business_name}
         stored={record.internal_price_estimate}
+        pricingEngineEnabled={pricingEngineEnabled}
       />
 
       <section className="space-y-6">

@@ -1,14 +1,22 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 
+import { SITE_VERCEL_EVENTS, trackSiteVercelEvent } from "@/components/analytics/vercel-tracking";
 import { ButtonLink } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
 export function IntakeSuccessView() {
   const params = useSearchParams();
   const intakeRef = params.get("ref");
+
+  useEffect(() => {
+    trackSiteVercelEvent(SITE_VERCEL_EVENTS.intakeSuccessView, {
+      has_confirmation_ref: Boolean(intakeRef),
+    });
+  }, [intakeRef]);
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-4 py-16 sm:px-6 lg:px-8">
@@ -59,6 +67,15 @@ export function IntakeSuccessView() {
           The staff link is for Anakatech operators only (separate secure sign-in)—not this public briefing form.
         </p>
       </Card>
+
+      <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] px-5 py-6 text-center sm:px-8">
+        <p className="text-sm leading-relaxed text-white/52">
+          Want your own version of this system for your business?
+        </p>
+        <ButtonLink href="/white-label" variant="ghost" className="mx-auto mt-4 border border-white/[0.12] px-6 text-[13px] text-white/80">
+          Get Your Own
+        </ButtonLink>
+      </div>
     </div>
   );
 }

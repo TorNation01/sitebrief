@@ -4,7 +4,9 @@ import { redirect } from "next/navigation";
 
 import { AdminChrome } from "@/components/admin/admin-chrome";
 import { isSiteBriefAdminUser } from "@/lib/auth/sitebrief-admin";
+import { fetchStudioSubscription } from "@/lib/sitebrief/queries";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { parseSubscriptionTier } from "@/types/subscription";
 
 export const metadata: Metadata = {
   title: "Dashboard",
@@ -27,5 +29,12 @@ export default async function AdminDashboardBoundaryLayout({
 
   const identityLabel = user.email ?? "Studio steward";
 
-  return <AdminChrome identity={identityLabel}>{children}</AdminChrome>;
+  const subRow = await fetchStudioSubscription(supabase);
+  const subscriptionTier = parseSubscriptionTier(subRow?.subscription_tier);
+
+  return (
+    <AdminChrome identity={identityLabel} subscriptionTier={subscriptionTier}>
+      {children}
+    </AdminChrome>
+  );
 }

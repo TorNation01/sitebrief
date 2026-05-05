@@ -2,8 +2,10 @@ import type { SiteBriefClient } from "@/lib/sitebrief/supabase-brand";
 import type {
   AdminNoteRow,
   ClientRow,
+  StudioSubscriptionRow,
   WebsiteIntakeRow,
   WebsiteIntakeWithClientRow,
+  WhiteLabelRequestRow,
 } from "@/types/database";
 
 type SupabasePostgrestError = { message?: string };
@@ -70,4 +72,41 @@ export async function fetchAdminNotesForIntake(
 
   throwIfPresent(error);
   return data ?? [];
+}
+
+/** White-label / partner inquiries. Admin JWT only. */
+export async function fetchWhiteLabelRequestsAdmin(
+  admin: SiteBriefClient,
+): Promise<WhiteLabelRequestRow[]> {
+  const { data, error } = await admin
+    .from("white_label_requests")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  throwIfPresent(error);
+  return (data ?? []) as WhiteLabelRequestRow[];
+}
+
+export async function fetchWhiteLabelRequestByIdAdmin(
+  admin: SiteBriefClient,
+  id: string,
+): Promise<WhiteLabelRequestRow | null> {
+  const { data, error } = await admin
+    .from("white_label_requests")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+
+  throwIfPresent(error);
+  return (data as WhiteLabelRequestRow | null) ?? null;
+}
+
+/** Singleton studio SaaS tier. Admin JWT only. */
+export async function fetchStudioSubscription(
+  admin: SiteBriefClient,
+): Promise<StudioSubscriptionRow | null> {
+  const { data, error } = await admin.from("studio_subscription").select("*").eq("id", 1).maybeSingle();
+
+  throwIfPresent(error);
+  return data ?? null;
 }

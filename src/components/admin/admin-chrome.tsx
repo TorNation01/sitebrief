@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { hasSupabaseBrowserConfig } from "@/lib/env";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { getPublicBrand } from "@/lib/sitebrief/brand";
+import type { SubscriptionTier } from "@/types/subscription";
+import { subscriptionTierLabel } from "@/types/subscription";
 
 type NavItem = {
   href: string;
@@ -17,6 +19,7 @@ type NavItem = {
 
 const NAV_ITEMS: NavItem[] = [
   { href: "/admin", label: "Brief queue" },
+  { href: "/admin/billing", label: "Plan & billing" },
   { href: "/intake", label: "Client intake portal" },
   { href: "/", label: "Marketing site" },
 ];
@@ -25,10 +28,11 @@ const BRAND_SIDEBAR = getPublicBrand();
 
 type AdminChromeProps = {
   identity: string;
+  subscriptionTier: SubscriptionTier;
   children: React.ReactNode;
 };
 
-export function AdminChrome({ identity, children }: AdminChromeProps) {
+export function AdminChrome({ identity, subscriptionTier, children }: AdminChromeProps) {
   const router = useRouter();
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -37,6 +41,10 @@ export function AdminChrome({ identity, children }: AdminChromeProps) {
   function isActive(entry: NavItem) {
     if (entry.href === "/") {
       return pathname === "/";
+    }
+
+    if (entry.href === "/admin") {
+      return pathname === "/admin";
     }
 
     return pathname === entry.href || pathname.startsWith(`${entry.href}/`);
@@ -128,6 +136,12 @@ export function AdminChrome({ identity, children }: AdminChromeProps) {
                   Session identity
                 </p>
                 <p className="mt-3 break-all font-mono text-[13px] text-white">{identity}</p>
+                <p className="mt-3 text-[10px] font-semibold uppercase tracking-[0.32em] text-white/52">
+                  Plan
+                </p>
+                <p className="mt-2 text-[13px] font-semibold text-[var(--color-accent)]">
+                  {subscriptionTierLabel(subscriptionTier)}
+                </p>
               </div>
               <button
                 type="button"

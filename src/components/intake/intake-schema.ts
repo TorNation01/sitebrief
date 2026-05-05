@@ -101,23 +101,42 @@ export const intakeFormSchema = z.object({
 
 export const intakeFormSchemaWithHoneypot = intakeFormSchema.extend({
   hp_company_url: z.string().max(280).default(""),
+  /** Second trap — autocomplete-attracting “role”; must stay blank. */
+  hp_department_role: z.string().max(280).default(""),
 }).superRefine((data, ctx) => {
-  if (data.hp_company_url.trim().length === 0) {
+  if (data.hp_company_url.trim().length > 0) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "blocked",
+      path: ["hp_company_url"],
+    });
     return;
   }
-  ctx.addIssue({
-    code: z.ZodIssueCode.custom,
-    message: "blocked",
-    path: ["hp_company_url"],
-  });
+  if (data.hp_department_role.trim().length > 0) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "blocked",
+      path: ["hp_department_role"],
+    });
+  }
 });
 
 export type IntakeFormValues = z.infer<typeof intakeFormSchema>;
 export type IntakeFormValuesWithHoneypot = z.infer<typeof intakeFormSchemaWithHoneypot>;
 
+export const INTAKE_HONEYPOT_FIELD_NAMES = ["hp_company_url", "hp_department_role"] as const;
+
+export function intakeFormHoneypotWasTriggered(
+  issues: readonly { path?: readonly PropertyKey[] }[],
+): boolean {
+  const names = new Set<string>(INTAKE_HONEYPOT_FIELD_NAMES);
+  return issues.some((issue) => names.has(String(issue.path?.[0])));
+}
+
 export function stripIntakeFormHoneypot(values: IntakeFormValuesWithHoneypot): IntakeFormValues {
-  const { hp_company_url, ...rest } = values;
+  const { hp_company_url, hp_department_role, ...rest } = values;
   void hp_company_url;
+  void hp_department_role;
   return rest as IntakeFormValues;
 }
 
@@ -167,6 +186,7 @@ export const intakeDefaultValues: IntakeFormValues = {
 export const intakeWizardDefaultValues: IntakeFormValuesWithHoneypot = {
   ...intakeDefaultValues,
   hp_company_url: "",
+  hp_department_role: "",
 };
 
 export const INTAKE_STEPS = [
@@ -300,7 +320,7 @@ const CHECKBOX_LOOKUP = new Set<string>([
   ...AI_OPTIONS,
 ]);
 
-export function sanitizeIntakeSelections<T extends IntakeFormValues & { hp_company_url?: string }>(
+export function sanitizeIntakeSelections<T extends IntakeFormValues & { hp_company_url?: string; hp_department_role?: string }>(
   values: T,
 ): T {
   return {

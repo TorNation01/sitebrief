@@ -42,6 +42,22 @@ The migration grants DML rights on these tables to **`anon`** and **`authenticat
 
 After migration **`20260506120000_internal_price_estimate.sql`**, `website_intakes.internal_price_estimate` holds **studio-only JSON** generated from the admin intake detail view. The same RLS row access applies: **`anon` never reads** intake rows; public **INSERT** leaves this column **null** unless you change the app.
 
+## `white_label_requests`
+
+Defined in **`20260507183000_white_label_requests.sql`**. Stores `submission_type` **`white_label_request`** for partner / white-label inquiries.
+
+| Operation | Roles | Effect |
+|-----------|-------|--------|
+| **INSERT** | `anon`, `authenticated` | **Allowed** when `submission_type = 'white_label_request'` (enforced by `WITH CHECK`). |
+| **SELECT** | `authenticated` | Allowed only when **`sitebrief_is_admin()`** is true. |
+| **DELETE** | `authenticated` | Allowed only when **`sitebrief_is_admin()`** is true (optional cleanup). |
+
+## `sitebrief_submission_rate_events`
+
+Migration **`20260508104500_sitebrief_submission_rate_events.sql`**. Telemetry for **submission rate limiting** (`kind` **`intake`** or **`white_label`**).
+
+ **`anon`** / **`authenticated`** have **`REVOKE ALL`** — your app inserts rows via **`SUPABASE_SERVICE_ROLE_KEY`** (service role JWT bypasses RLS). Omit the key locally to fall back to an in-memory counter per Node instance.
+
 ## Operational checks
 
 - If public intake fails with **RLS or permission** errors, confirm insert policies exist and the request uses the **anon key** (or an authenticated user that is still allowed to insert per policy).

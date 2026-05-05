@@ -1,15 +1,17 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { FormProvider, useForm, type UseFormReturn } from "react-hook-form";
 import { useRouter } from "next/navigation";
 
 import { submitWebsiteIntakeAction } from "@/actions/intake-submit";
+import { SITE_VERCEL_EVENTS, trackSiteVercelEvent } from "@/components/analytics/vercel-tracking";
 import { IntakeReviewSummary } from "@/components/intake/intake-review-summary";
 import { IntakeStepFields } from "@/components/intake/intake-steps";
 import { IntakeWalkthroughIntro } from "@/components/intake/intake-walkthrough-intro";
 import {
   applyZodIssuesToForm,
+  intakeFormHoneypotWasTriggered,
   intakeFormSchemaWithHoneypot,
   intakeStepSchemas,
   intakeWizardDefaultValues,
@@ -75,6 +77,15 @@ export function IntakeWizard({ supabaseConfigured }: IntakeWizardProps) {
     mode: "onSubmit",
     reValidateMode: "onChange",
   });
+
+  const intakeStartedSent = useRef(false);
+
+  useEffect(() => {
+    if (phase === "steps" && !intakeStartedSent.current) {
+      intakeStartedSent.current = true;
+      trackSiteVercelEvent(SITE_VERCEL_EVENTS.intakeStarted);
+    }
+  }, [phase]);
 
   const canPersistServer = Boolean(supabaseConfigured);
 
@@ -148,7 +159,7 @@ export function IntakeWizard({ supabaseConfigured }: IntakeWizardProps) {
 
     const parsed = intakeFormSchemaWithHoneypot.safeParse(methods.getValues());
     if (!parsed.success) {
-      const suspicious = parsed.error.issues.some((issue) => issue.path[0] === "hp_company_url");
+      const suspicious = intakeFormHoneypotWasTriggered(parsed.error.issues);
       if (suspicious) {
         setSubmitError(
           "Automatic form fillers blocked this submission. Disable extensions for this site or clear optional hidden fields.",
@@ -182,6 +193,7 @@ export function IntakeWizard({ supabaseConfigured }: IntakeWizardProps) {
         return;
       }
 
+      trackSiteVercelEvent(SITE_VERCEL_EVENTS.intakeCompleted);
       router.push(`/intake/success?ref=${encodeURIComponent(outcome.intakeId)}`);
     } catch (error) {
       setSubmitError(formatUnknownActionError(error));
@@ -251,6 +263,13 @@ export function IntakeWizard({ supabaseConfigured }: IntakeWizardProps) {
         <div className="pointer-events-none absolute left-[-9000px] top-0 h-px w-px overflow-hidden" aria-hidden>
           <label htmlFor="sitebrief_hp_company_url">Company website</label>
           <input id="sitebrief_hp_company_url" tabIndex={-1} autoComplete="off" {...methods.register("hp_company_url")} />
+          <label htmlFor="sitebrief_hp_department_role">Department / role</label>
+          <input
+            id="sitebrief_hp_department_role"
+            tabIndex={-1}
+            autoComplete="organization-title"
+            {...methods.register("hp_department_role")}
+          />
         </div>
 
         {(blockingMessage || submitError) && (

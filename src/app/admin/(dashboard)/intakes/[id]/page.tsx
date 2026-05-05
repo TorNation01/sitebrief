@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { SubmissionStudioDetail } from "@/components/admin/submission-studio-detail";
-import { fetchAdminNotesForIntake, fetchWebsiteIntakeWithClientById } from "@/lib/sitebrief/queries";
+import { fetchAdminNotesForIntake, fetchStudioSubscription, fetchWebsiteIntakeWithClientById } from "@/lib/sitebrief/queries";
+import { parseSubscriptionTier } from "@/types/subscription";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 type IntakeStudioPageProps = {
@@ -35,5 +36,8 @@ export default async function AdminSubmissionDetailRoute({ params }: IntakeStudi
 
   const notes = await fetchAdminNotesForIntake(supabase, dossier.id);
 
-  return <SubmissionStudioDetail record={dossier} notes={notes} />;
+  const sub = await fetchStudioSubscription(supabase);
+  const subscriptionTier = parseSubscriptionTier(sub?.subscription_tier);
+
+  return <SubmissionStudioDetail record={dossier} notes={notes} subscriptionTier={subscriptionTier} />;
 }

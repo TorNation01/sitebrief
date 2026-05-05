@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { LandingVisitBeacon } from "@/components/analytics/vercel-tracking";
 import { LandingShell } from "@/components/landing/landing-shell";
 import { LandingHero } from "@/components/landing/landing-hero";
 import { LandingBriefPreview } from "@/components/landing/landing-brief-preview";
@@ -21,6 +22,7 @@ export const metadata: Metadata = {
 export default function HomePage() {
   return (
     <LandingShell>
+      <LandingVisitBeacon />
       <LandingHero />
       <LandingBriefPreview />
       <LandingHowItWorks />

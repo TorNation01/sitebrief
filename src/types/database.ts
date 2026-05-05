@@ -192,6 +192,81 @@ export type Database = {
           },
         ];
       };
+      white_label_requests: {
+        Row: {
+          id: string;
+          submission_type: string;
+          contact_name: string;
+          email: string;
+          organization: string | null;
+          message: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          submission_type?: string;
+          contact_name: string;
+          email: string;
+          organization?: string | null;
+          message?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          submission_type?: string;
+          contact_name?: string;
+          email?: string;
+          organization?: string | null;
+          message?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      studio_subscription: {
+        Row: {
+          id: number;
+          subscription_tier: string;
+          stripe_customer_id: string | null;
+          stripe_subscription_id: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          id?: number;
+          subscription_tier?: string;
+          stripe_customer_id?: string | null;
+          stripe_subscription_id?: string | null;
+          updated_at?: string;
+        };
+        Update: {
+          id?: number;
+          subscription_tier?: string;
+          stripe_customer_id?: string | null;
+          stripe_subscription_id?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      sitebrief_submission_rate_events: {
+        Row: {
+          id: string;
+          ip_hash: string;
+          kind: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          ip_hash: string;
+          kind: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          ip_hash?: string;
+          kind?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -211,6 +286,10 @@ export type WebsiteIntakeAdminUpdate =
   >;
 export type AdminNoteRow = Database["public"]["Tables"]["admin_notes"]["Row"];
 export type AdminNoteInsert = Database["public"]["Tables"]["admin_notes"]["Insert"];
+export type WhiteLabelRequestRow = Database["public"]["Tables"]["white_label_requests"]["Row"];
+export type WhiteLabelRequestInsert = Database["public"]["Tables"]["white_label_requests"]["Insert"];
+export type StudioSubscriptionRow = Database["public"]["Tables"]["studio_subscription"]["Row"];
+export type StudioSubscriptionUpdate = Database["public"]["Tables"]["studio_subscription"]["Update"];
 
 export type WebsiteIntakeWithClientRow = WebsiteIntakeRow & {
   clients: ClientRow | null;

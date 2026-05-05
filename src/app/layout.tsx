@@ -1,7 +1,8 @@
+import "./globals.css";
+
+import { Analytics } from "@vercel/analytics/next";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-
-import "./globals.css";
 
 import { ConditionalMarketingShell } from "@/components/layout/conditional-marketing-shell";
 import { getBrandCssVars, getPublicBrand } from "@/lib/sitebrief/brand";
@@ -72,6 +73,7 @@ export default function RootLayout({
           />
         ) : null}
         <ConditionalMarketingShell>{children}</ConditionalMarketingShell>
+        <Analytics />
       </body>
     </html>
   );

@@ -6,11 +6,12 @@ import { isSiteBriefAdminUser } from "@/lib/auth/sitebrief-admin";
 import { buildInternalPriceEstimate } from "@/lib/sitebrief/build-internal-price-estimate";
 import { buildCursorPromptPackMarkdown } from "@/lib/sitebrief/build-cursor-prompt-pack";
 import { insertAdminNote, updateWebsiteIntakeAdminFields } from "@/lib/sitebrief/mutations";
-import { fetchWebsiteIntakeWithClientById } from "@/lib/sitebrief/queries";
+import { fetchStudioSubscription, fetchWebsiteIntakeWithClientById } from "@/lib/sitebrief/queries";
 import type { SiteBriefClient } from "@/lib/sitebrief/supabase-brand";
 import { isWorkflowStatus } from "@/lib/sitebrief/workflow-status";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { internalPriceEstimateV1Schema, type InternalPriceEstimateV1 } from "@/types/price-estimate";
+import { canUseInternalPricingEngine, parseSubscriptionTier } from "@/types/subscription";
 
 type StudioGuardResult =
   | { error: string }
@@ -145,6 +146,15 @@ export async function regenerateInternalPriceEstimateAction(
   }
 
   try {
+    const sub = await fetchStudioSubscription(guard.supabase);
+    const tier = parseSubscriptionTier(sub?.subscription_tier);
+    if (!canUseInternalPricingEngine(tier)) {
+      return {
+        error:
+          "The internal pricing engine is not available on the Basic plan — upgrade under Plan & billing.",
+      };
+    }
+
     const dossier = await fetchWebsiteIntakeWithClientById(guard.supabase, intakeId);
     if (!dossier?.clients) {
       return { error: "That submission no longer exists." };
