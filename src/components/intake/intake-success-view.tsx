@@ -14,23 +14,23 @@ export function IntakeSuccessView() {
     <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-4 py-16 sm:px-6 lg:px-8">
       <div>
         <p className="text-xs font-semibold uppercase tracking-[0.32em] text-[var(--color-accent)]">
-          Transmission complete
+          All set
         </p>
         <h1 className="mt-5 text-balance text-4xl font-semibold text-white sm:text-[2.85rem] sm:leading-tight">
-          Your brief landed safely.
+          Your Website Brief Has Been Submitted
         </h1>
         <p className="mt-4 max-w-2xl text-sm leading-relaxed text-white/72 sm:text-base">
-          Your responses were validated on the server and written via Supabase with Row Level Security on the anon
-          role—matching the migrations shipped in this repo.
+          Thanks — we’ve received your answers and will use them to prepare the best website build plan for your
+          project.
         </p>
       </div>
 
       <Card tone="light">
         <p className="text-sm font-semibold text-zinc-900">What happens now</p>
         <ul className="mt-4 list-disc space-y-3 pl-5 text-sm leading-relaxed text-zinc-600">
-          <li>Internal reviewers receive the structured payload ready for QA.</li>
-          <li>Expect a routed response outlining clarity questions or next workshops.</li>
-          <li>Need to amend something material? Reply to the acknowledgement thread once it arrives.</li>
+          <li>Your answers land with our team in a clear, structured brief—easy to review and act on.</li>
+          <li>Expect a thoughtful follow-up with any clarification questions or suggested next conversations.</li>
+          <li>Need to change something meaningful? Reply on the acknowledgement message once it arrives.</li>
         </ul>
 
         <div className="mt-6 rounded-xl bg-zinc-50 px-4 py-4 text-sm text-zinc-700 ring-1 ring-zinc-200">
@@ -56,8 +56,7 @@ export function IntakeSuccessView() {
           </Link>
         </div>
         <p className="mt-6 text-xs leading-relaxed text-zinc-500">
-          Admin opens the staff link with a provisioned Studio account carrying the administrator role—not the public
-          brief form.
+          The staff link is for Anakatech operators only (separate secure sign-in)—not this public briefing form.
         </p>
       </Card>
     </div>

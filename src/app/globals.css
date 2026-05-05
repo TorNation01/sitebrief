@@ -1,10 +1,10 @@
 @import "tailwindcss";
 
 :root {
-  --color-surface: #0c0c0f;
-  --color-surface-elevated: #121218;
+  --color-surface: #08080b;
+  --color-surface-elevated: #0e0e12;
   --color-accent: #c9a962;
-  --color-accent-hover: #d9bc78;
+  --color-accent-hover: #e0c97f;
   --color-muted: #9a9a9f;
   --color-card: #ffffff;
   --color-card-foreground: #0f0f12;
@@ -31,4 +31,40 @@ body {
 ::selection {
   background-color: color-mix(in srgb, var(--color-accent) 35%, transparent);
   color: #fff;
+}
+
+@keyframes sb-landing-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .sb-landing-rise {
+    opacity: 0;
+    animation: sb-landing-rise 0.75s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+
+  .sb-landing-delay-1 {
+    animation-delay: 95ms;
+  }
+  .sb-landing-delay-2 {
+    animation-delay: 180ms;
+  }
+  .sb-landing-delay-3 {
+    animation-delay: 265ms;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sb-landing-rise {
+    opacity: 1;
+    transform: none;
+    animation: none;
+  }
 }

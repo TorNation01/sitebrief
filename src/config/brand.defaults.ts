@@ -4,13 +4,14 @@
  */
 export const BRAND_DEFAULTS = {
   appName: "SiteBrief",
-  /** Sidebar / admin operating name (agency, pod, or company). */
-  studioDisplayName: "Your studio",
-  taglineFooter: "Client intake for custom website builds.",
+  /** Parent studio (sidebar + provenance lines). */
+  studioDisplayName: "Anakatech",
+  taglineFooter:
+    "Standalone website briefing from Anakatech—premium, calm, and fast for clients and delivery teams alike.",
   metaDescriptionShort:
-    "Capture detailed website briefs from clients and turn them into structured, Cursor-ready build prompts.",
+    "SiteBrief is a standalone Anakatech technology: an elegant guided website brief that feels premium and moves fast—goals, scope, and preferences in one place.",
   /** Filename slug for exports (`{slug}-business-intake-id.md`). */
   exportSlug: "sitebrief",
   accentHex: "#c9a962",
-  accentHoverHex: "#d9bc78",
+  accentHoverHex: "#e0c97f",
 } as const;

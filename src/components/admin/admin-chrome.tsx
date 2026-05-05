@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 
 import { BrandLogoMark } from "@/components/brand/brand-logo-mark";
 import { Button } from "@/components/ui/button";
+import { hasSupabaseBrowserConfig } from "@/lib/env";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { getPublicBrand } from "@/lib/sitebrief/brand";
 
@@ -44,8 +45,12 @@ export function AdminChrome({ identity, children }: AdminChromeProps) {
   async function logout() {
     setSigningOut(true);
     try {
-      const client = createSupabaseBrowserClient();
-      await client.auth.signOut({ scope: "local" });
+      if (hasSupabaseBrowserConfig()) {
+        const client = createSupabaseBrowserClient();
+        await client.auth.signOut({ scope: "local" });
+      }
+    } catch {
+      // Still route away from authenticated shell even if Supabase threw.
     } finally {
       setSigningOut(false);
       router.replace("/admin/login");
@@ -81,7 +86,7 @@ export function AdminChrome({ identity, children }: AdminChromeProps) {
                 {BRAND_SIDEBAR.studioDisplayName}
               </p>
               <p className="mt-2 max-w-[16rem] text-xs leading-relaxed text-white/62">
-                Govern intake submissions, escalate prompt packs, and monitor partner obligations.
+                Anakatech console for incoming website briefs—review submissions, notes, and next steps in one place.
               </p>
             </div>
           </div>
@@ -134,7 +139,7 @@ export function AdminChrome({ identity, children }: AdminChromeProps) {
                 <span aria-hidden>{signingOut ? "…" : "↗"}</span>
               </button>
               <div className="text-[11px] text-white/48">
-                <p>Routed securely through Supabase Auth + hardened row policies.</p>
+                <p>Signed-in session; access limited to approved {BRAND_SIDEBAR.studioDisplayName} operators.</p>
               </div>
             </div>
           </nav>

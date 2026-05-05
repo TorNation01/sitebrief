@@ -28,6 +28,7 @@ export const INTEGRATIONS_OPTIONS = [
   "Marketing automation (Klaviyo, Mailchimp, etc.)",
   "Analytics (GA4, Matomo, etc.)",
   "Single sign-on / directory (Okta, Google Workspace)",
+  "Not sure",
 ] as const;
 
 export const AI_OPTIONS = [
@@ -35,6 +36,7 @@ export const AI_OPTIONS = [
   "AI chat / triage for visitors",
   "Drafting support for long-form pages",
   "Translation or localization assist",
+  "Not sure",
 ] as const;
 
 const TEXT_SHORT = 500;

@@ -1,9 +1,10 @@
 import Link from "next/link";
 
-import { getPublicBrand } from "@/lib/sitebrief/brand";
+import { getPublicBrand, getPublicSiteHostname } from "@/lib/sitebrief/brand";
 
 export function SiteFooter() {
   const brand = getPublicBrand();
+  const host = getPublicSiteHostname();
 
   return (
     <footer className="border-t border-white/[0.08] bg-[var(--color-surface)]">
@@ -11,6 +12,10 @@ export function SiteFooter() {
         <div>
           <p className="text-sm font-semibold text-white">{brand.appName}</p>
           <p className="mt-1 max-w-xl text-sm text-white/55">{brand.taglineFooter}</p>
+          <p className="mt-3 text-xs font-medium uppercase tracking-[0.2em] text-[var(--color-accent)]/90">
+            Standalone {brand.appName} from {brand.studioDisplayName}
+            {host ? ` · ${host}` : ""}
+          </p>
         </div>
         <div className="flex flex-wrap gap-x-8 gap-y-3 text-sm">
           <Link

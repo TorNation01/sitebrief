@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { CopyClientBriefButton } from "@/components/admin/copy-client-brief-button";
+import { InternalPriceEstimatePanel } from "@/components/admin/internal-price-estimate-panel";
 import { PromptPackWorkbench } from "@/components/admin/prompt-pack-workbench";
 import { SUBMISSION_FIELD_BLUEPRINT } from "@/components/admin/submission-detail-matrix";
 import { SubmissionNoteComposer } from "@/components/admin/submission-note-composer";
@@ -99,6 +100,13 @@ export function SubmissionStudioDetail({ record, notes }: SubmissionStudioDetail
         intakeId={record.id}
         businessName={record.clients.business_name}
         initialMarkdown={record.generated_prompt_pack}
+      />
+
+      <InternalPriceEstimatePanel
+        key={`price-${record.id}-${record.updated_at}`}
+        intakeId={record.id}
+        businessName={record.clients.business_name}
+        stored={record.internal_price_estimate}
       />
 
       <section className="space-y-6">

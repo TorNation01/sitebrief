@@ -23,19 +23,19 @@ const checklistBoxClass =
 const checklistRowClass =
   "flex cursor-pointer items-start gap-3 rounded-xl border border-zinc-100 bg-white p-3 text-sm leading-snug shadow-sm hover:border-[var(--color-accent)]/35";
 
-type SelectChoice = {
+export type IntakeSelectChoice = {
   value: string;
   label: string;
   disabled?: boolean;
 };
 
-const SELECT_PLACEHOLDER: SelectChoice = {
+const SELECT_PLACEHOLDER: IntakeSelectChoice = {
   value: "",
   label: "Select an option",
   disabled: true,
 };
 
-const CONTENT_STATUS_OPTIONS = [
+export const CONTENT_STATUS_OPTIONS = [
   SELECT_PLACEHOLDER,
   {
     value: "ready-copy",
@@ -59,7 +59,7 @@ const CONTENT_STATUS_OPTIONS = [
   },
 ];
 
-const BRANDING_OPTIONS = [
+export const BRANDING_OPTIONS = [
   SELECT_PLACEHOLDER,
   {
     value: "system-ready",
@@ -78,7 +78,7 @@ const BRANDING_OPTIONS = [
   },
 ];
 
-const DOMAIN_OPTIONS = [
+export const DOMAIN_OPTIONS = [
   SELECT_PLACEHOLDER,
   {
     value: "owned-ready",
@@ -100,9 +100,14 @@ const DOMAIN_OPTIONS = [
     label: "Unsure—we value recommendations",
     disabled: false,
   },
+  {
+    value: "not-sure",
+    label: "Not sure",
+    disabled: false,
+  },
 ];
 
-const HOSTING_OPTIONS = [
+export const HOSTING_OPTIONS = [
   SELECT_PLACEHOLDER,
   {
     value: "agency-managed",
@@ -119,9 +124,14 @@ const HOSTING_OPTIONS = [
     label: "Open playbook—shopping for the right footing",
     disabled: false,
   },
+  {
+    value: "not-sure",
+    label: "Not sure",
+    disabled: false,
+  },
 ];
 
-const PLATFORM_OPTIONS = [
+export const PLATFORM_OPTIONS = [
   SELECT_PLACEHOLDER,
   {
     value: "open",
@@ -148,9 +158,14 @@ const PLATFORM_OPTIONS = [
     label: "Headless orchestration / custom React footprint",
     disabled: false,
   },
+  {
+    value: "not-sure",
+    label: "Not sure",
+    disabled: false,
+  },
 ];
 
-const PRIORITY_OPTIONS = [
+export const PRIORITY_OPTIONS = [
   SELECT_PLACEHOLDER,
   {
     value: "balanced",
@@ -169,7 +184,7 @@ const PRIORITY_OPTIONS = [
   },
 ];
 
-const BUDGET_OPTIONS: SelectChoice[] = [
+export const BUDGET_OPTIONS: IntakeSelectChoice[] = [
   { value: "", label: "Choose a budget band", disabled: true },
   {
     value: "under-25k-usd",
@@ -250,7 +265,7 @@ function SelectInput(props: {
   hint?: string;
   required?: boolean;
   error?: FieldError;
-  options: SelectChoice[];
+  options: IntakeSelectChoice[];
   fieldName: keyof IntakeFormValues;
 }) {
   const { id, label, hint, required, error, options, fieldName } = props;
@@ -282,6 +297,7 @@ function SelectInput(props: {
 export function IntakeStepFields({ stepIndex }: { stepIndex: number }) {
   const {
     register,
+    setValue,
     formState: { errors },
   } = useFormContext<IntakeFormValues>();
 
@@ -382,7 +398,7 @@ export function IntakeStepFields({ stepIndex }: { stepIndex: number }) {
           <FieldGroup
             label="Ideal customer archetype"
             htmlFor="ideal_customer"
-            hint="Industries, company scale, stakeholder roles buying the solution."
+            hint="Your ideal customer means the type of person or business most likely to buy from you. Mention industries, company size, roles, or anything that helps describe them."
             error={errors.ideal_customer}
           >
             <textarea
@@ -428,7 +444,7 @@ export function IntakeStepFields({ stepIndex }: { stepIndex: number }) {
           <FieldGroup
             label="Primary outcome for the rebuilt site"
             htmlFor="website_goal"
-            hint="Growth, repositioning, lead quality, onboarding cost, ecommerce lift—prioritize the apex outcome."
+            hint="Website goal means the main job your website needs to do—like generating leads, selling products, or building trust. Answer in your own words; we will translate it."
             required
             error={errors.website_goal}
           >
@@ -604,7 +620,7 @@ export function IntakeStepFields({ stepIndex }: { stepIndex: number }) {
 
           <CheckboxList
             label="Integrations we should architect for on day one"
-            hint="Select every system that must handshake with the site or its data layer."
+            hint="Integrations are tools your website may need to connect with—like Stripe, Calendly, Mailchimp, or a CRM. Select what applies, or choose “Not sure” for guidance later."
             name="integrations_selected"
             options={INTEGRATIONS_OPTIONS}
           />
@@ -690,7 +706,7 @@ export function IntakeStepFields({ stepIndex }: { stepIndex: number }) {
           <FieldGroup
             label="Trust, risk, and compliance guardrails"
             htmlFor="compliance_needs"
-            hint="HIPAA, FINRA, GDPR, accessibility targets (WCAG), sector regulators, data residency, etc."
+            hint="Examples: HIPAA, FINRA, GDPR, accessibility (WCAG), industry regulators, or data residency. If you are unsure, choose “Insert Not sure” below or jot a quick note—we will follow up."
             error={errors.compliance_needs}
           >
             <textarea
@@ -699,6 +715,18 @@ export function IntakeStepFields({ stepIndex }: { stepIndex: number }) {
               {...register("compliance_needs")}
               rows={6}
             />
+            <button
+              type="button"
+              className="mt-2 text-left text-xs font-semibold text-[color:color-mix(in_srgb,var(--color-accent)_90%,black)] underline-offset-4 hover:underline"
+              onClick={() =>
+                setValue("compliance_needs", "Not sure", {
+                  shouldDirty: true,
+                  shouldTouch: true,
+                })
+              }
+            >
+              Insert “Not sure”
+            </button>
           </FieldGroup>
         </div>
       );
@@ -721,7 +749,7 @@ export function IntakeStepFields({ stepIndex }: { stepIndex: number }) {
 
           <CheckboxList
             label="AI-assisted experiences on the radar"
-            hint="We're not auto-enabling anything—this clarifies due diligence + policy work."
+            hint="We will not enable anything automatically—this shapes planning and guardrails. Select what interests you or choose “Not sure”."
             name="ai_selected"
             options={AI_OPTIONS}
           />

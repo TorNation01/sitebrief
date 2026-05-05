@@ -104,16 +104,7 @@ export function PromptPackWorkbench({
             disabled={isSaving}
             onClick={() => void runGenerator()}
           >
-            {isSaving ? "Synthesizing…" : "Generate Cursor Prompt Pack"}
-          </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            disabled={!hasPack || isSaving}
-            className="w-full border border-white/[0.22] px-6 text-white lg:w-auto disabled:opacity-30"
-            onClick={() => void runGenerator()}
-          >
-            Regenerate
+            {isSaving ? "Synthesizing…" : hasPack ? "Regenerate Cursor Prompt Pack" : "Generate Cursor Prompt Pack"}
           </Button>
         </div>
       </div>

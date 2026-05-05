@@ -5,7 +5,9 @@ import { FormProvider, useForm, type UseFormReturn } from "react-hook-form";
 import { useRouter } from "next/navigation";
 
 import { submitWebsiteIntakeAction } from "@/actions/intake-submit";
+import { IntakeReviewSummary } from "@/components/intake/intake-review-summary";
 import { IntakeStepFields } from "@/components/intake/intake-steps";
+import { IntakeWalkthroughIntro } from "@/components/intake/intake-walkthrough-intro";
 import {
   applyZodIssuesToForm,
   intakeFormSchemaWithHoneypot,
@@ -21,6 +23,8 @@ import { Card } from "@/components/ui/card";
 type IntakeWizardProps = {
   supabaseConfigured: boolean;
 };
+
+type IntakePhase = "intro" | "steps" | "review";
 
 const STEP_COUNT = INTAKE_STEPS.length;
 
@@ -61,6 +65,7 @@ function formatUnknownActionError(payload: unknown) {
 
 export function IntakeWizard({ supabaseConfigured }: IntakeWizardProps) {
   const router = useRouter();
+  const [phase, setPhase] = useState<IntakePhase>("intro");
   const [step, setStep] = useState(0);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isSubmitting, setSubmitting] = useState(false);
@@ -77,7 +82,11 @@ export function IntakeWizard({ supabaseConfigured }: IntakeWizardProps) {
     ? "Submissions require NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in the deployment environment (.env.local locally, project env on hosting)."
     : null;
 
-  const completion = Math.round(((step + 1) / STEP_COUNT) * 100);
+  const stepProgressPct =
+    phase === "review" ? 100 : Math.round(((step + 1) / STEP_COUNT) * 100);
+  const stickyStepTitle =
+    phase === "review" ? "Review answers" : INTAKE_STEPS[step].title;
+  const showStickyNav = phase === "steps" || phase === "review";
 
   const validateCurrentStep = useCallback(async () => {
     applySanitizedSelections(methods);
@@ -118,9 +127,20 @@ export function IntakeWizard({ supabaseConfigured }: IntakeWizardProps) {
     );
 
     if (index >= 0) {
+      setPhase("steps");
       setStep(index);
     }
   }, []);
+
+  const handleGoToReview = useCallback(async () => {
+    setSubmitError(null);
+    const ok = await validateCurrentStep();
+    if (!ok) {
+      return;
+    }
+    setPhase("review");
+    scrollToTopSmooth();
+  }, [validateCurrentStep]);
 
   const handleFinalSubmit = useCallback(async () => {
     setSubmitError(null);
@@ -139,6 +159,7 @@ export function IntakeWizard({ supabaseConfigured }: IntakeWizardProps) {
         if (typeof firstIssue === "string") {
           jumpToIssueStep(firstIssue as keyof IntakeFormValuesWithHoneypot);
         }
+        setPhase("steps");
       }
       scrollToTopSmooth();
       return;
@@ -170,18 +191,68 @@ export function IntakeWizard({ supabaseConfigured }: IntakeWizardProps) {
     }
   }, [jumpToIssueStep, methods, router, supabaseConfigured]);
 
+  const handleStickyPrimary = useCallback(async () => {
+    if (phase === "review") {
+      await handleFinalSubmit();
+      return;
+    }
+    if (step < STEP_COUNT - 1) {
+      await handleNext();
+      return;
+    }
+    await handleGoToReview();
+  }, [handleFinalSubmit, handleGoToReview, handleNext, phase, step]);
+
+  const handleStickyBack = useCallback(() => {
+    setSubmitError(null);
+    if (phase === "review") {
+      setPhase("steps");
+      setStep(STEP_COUNT - 1);
+      scrollToTopSmooth();
+      return;
+    }
+    handleBack();
+  }, [handleBack, phase]);
+
+  const handleEditFromReview = useCallback((targetStep: number) => {
+    setSubmitError(null);
+    setPhase("steps");
+    setStep(targetStep);
+    scrollToTopSmooth();
+  }, []);
+
   const meta = INTAKE_STEPS[step];
+
+  const stickyBackDisabled =
+    isSubmitting || (phase === "steps" && step === 0);
+
+  const stickyPrimaryLabel =
+    phase === "review"
+      ? isSubmitting
+        ? "Submitting…"
+        : "Submit Website Brief"
+      : step < STEP_COUNT - 1
+        ? "Continue"
+        : "Review answers";
+
+  const stickyPrimaryDisabled = isSubmitting || (phase === "review" && !canPersistServer);
 
   return (
     <FormProvider {...methods}>
       <form
         noValidate
-        className="relative space-y-10"
+        className={`relative space-y-10 ${showStickyNav ? "pb-32 sm:pb-28" : ""}`}
         aria-busy={isSubmitting}
         onSubmit={(evt) => {
           evt.preventDefault();
         }}
       >
+        {/* Honeypot: must stay empty; hidden from view and pointer events */}
+        <div className="pointer-events-none absolute left-[-9000px] top-0 h-px w-px overflow-hidden" aria-hidden>
+          <label htmlFor="sitebrief_hp_company_url">Company website</label>
+          <input id="sitebrief_hp_company_url" tabIndex={-1} autoComplete="off" {...methods.register("hp_company_url")} />
+        </div>
+
         {(blockingMessage || submitError) && (
           <div className="space-y-4">
             {blockingMessage ? (
@@ -204,114 +275,103 @@ export function IntakeWizard({ supabaseConfigured }: IntakeWizardProps) {
           </div>
         )}
 
-        <section className="space-y-4" aria-labelledby="intake-progress-label">
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div id="intake-progress-label">
-              <p className="text-[0.72rem] font-semibold uppercase tracking-[0.32em] text-[var(--color-accent)]">
-                Step {step + 1} of {STEP_COUNT}
-              </p>
-              <h2 className="mt-4 text-balance text-3xl font-semibold text-white sm:text-4xl">
-                {meta.title}
-              </h2>
-              <p className="mt-3 max-w-2xl text-sm leading-relaxed text-white/68 sm:text-base">
-                {meta.description}
-              </p>
-            </div>
+        {phase === "intro" ? (
+          <IntakeWalkthroughIntro
+            onStart={() => {
+              setPhase("steps");
+              scrollToTopSmooth();
+            }}
+          />
+        ) : null}
 
-            <div className="text-right">
-              <p className="text-[0.65rem] font-semibold uppercase tracking-[0.3em] text-white/58">
-                Progress
-              </p>
-              <p className="mt-4 text-2xl font-semibold text-white">{completion}%</p>
-            </div>
-          </div>
+        {phase === "steps" ? (
+          <>
+            <section className="space-y-4" aria-labelledby="intake-step-heading">
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div id="intake-step-heading">
+                  <p className="text-[0.72rem] font-semibold uppercase tracking-[0.32em] text-[var(--color-accent)]">
+                    Step {step + 1} of {STEP_COUNT}
+                  </p>
+                  <h2 className="mt-4 text-balance text-3xl font-semibold text-white sm:text-4xl">
+                    {meta.title}
+                  </h2>
+                  <p className="mt-3 max-w-2xl text-sm leading-relaxed text-white/68 sm:text-base">
+                    {meta.description}
+                  </p>
+                </div>
+              </div>
 
-          <div className="h-2 w-full overflow-hidden rounded-full bg-white/10 ring-1 ring-white/[0.04]">
-            <div
-              className="h-full rounded-full bg-gradient-to-r from-[var(--color-accent)] via-[color-mix(in_srgb,var(--color-accent-hover)_94%,transparent)] to-[color-mix(in_srgb,var(--color-accent-hover)_74%,transparent)] transition-[width] duration-500 ease-out"
-              style={{ width: `${completion}%` }}
-              aria-valuenow={completion}
-              aria-valuemin={0}
-              aria-valuemax={100}
-              role="progressbar"
-              aria-labelledby="intake-progress-label"
-            />
-          </div>
+              <div
+                className="h-2 w-full overflow-hidden rounded-full bg-white/10 ring-1 ring-white/[0.04]"
+                aria-hidden
+              >
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-[var(--color-accent)] via-[color-mix(in_srgb,var(--color-accent-hover)_94%,transparent)] to-[color-mix(in_srgb,var(--color-accent-hover)_74%,transparent)] transition-[width] duration-500 ease-out"
+                  style={{ width: `${stepProgressPct}%` }}
+                />
+              </div>
+            </section>
 
-          <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 sm:flex-wrap">
-            {INTAKE_STEPS.map((item, index) => {
-              const reached = index === step;
-              const finished = index < step;
-              return (
-                <span
-                  key={item.id}
-                  className={`whitespace-nowrap rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] sm:text-xs ${
-                    reached
-                      ? "bg-[var(--color-accent)] text-[#0f0f12]"
-                      : finished
-                        ? "border border-emerald-400/40 bg-emerald-500/10 text-emerald-100"
-                        : "border border-white/[0.12] bg-white/[0.02] text-white/52"
-                  }`}
-                  aria-current={reached ? "step" : undefined}
+            <Card tone="light" className="space-y-8">
+              <IntakeStepFields stepIndex={step} />
+            </Card>
+          </>
+        ) : null}
+
+        {phase === "review" ? (
+          <Card tone="light" className="space-y-8">
+            <IntakeReviewSummary onEditStep={handleEditFromReview} />
+          </Card>
+        ) : null}
+
+        {showStickyNav ? (
+          <div className="fixed inset-x-0 bottom-0 z-40 border-t border-white/[0.12] bg-[#0f0f12]/92 px-4 py-4 shadow-[0_-12px_40px_rgba(0,0,0,0.35)] backdrop-blur-md pb-[calc(1rem+env(safe-area-inset-bottom))]">
+            <div className="mx-auto flex w-full max-w-5xl flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="min-w-0 flex-1 space-y-2">
+                <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                  <p className="truncate text-base font-semibold text-white">{stickyStepTitle}</p>
+                  <p className="text-sm font-semibold tabular-nums text-white/80">
+                    {stepProgressPct}% complete
+                  </p>
+                </div>
+                <div
+                  className="h-1.5 w-full max-w-xl overflow-hidden rounded-full bg-white/10"
+                  role="progressbar"
+                  aria-valuenow={stepProgressPct}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-label={`Progress ${stepProgressPct}%`}
                 >
-                  <span aria-hidden>{index + 1} · </span>
-                  {item.title}
-                </span>
-              );
-            })}
-          </div>
-        </section>
+                  <div
+                    className="h-full rounded-full bg-[var(--color-accent)] transition-[width] duration-300 ease-out"
+                    style={{ width: `${stepProgressPct}%` }}
+                  />
+                </div>
+              </div>
 
-        <Card tone="light" className="space-y-8">
-          <IntakeStepFields stepIndex={step} />
-
-          {/* Honeypot: must stay empty; hidden from view and pointer events */}
-          <div className="pointer-events-none absolute left-[-9000px] top-0 h-px w-px overflow-hidden" aria-hidden>
-            <label htmlFor="sitebrief_hp_company_url">Company website</label>
-            <input
-              id="sitebrief_hp_company_url"
-              tabIndex={-1}
-              autoComplete="off"
-              {...methods.register("hp_company_url")}
-            />
-          </div>
-
-          <div className="flex flex-col gap-3 border-t border-zinc-100 pt-6 sm:flex-row sm:items-center sm:justify-between">
-            <Button
-              type="button"
-              variant="ghost"
-              className="w-full justify-center border border-zinc-200 bg-white text-zinc-900 hover:bg-zinc-50 hover:text-black sm:w-auto"
-              disabled={step === 0 || isSubmitting}
-              onClick={handleBack}
-            >
-              Back
-            </Button>
-
-            <div className="flex flex-1 flex-col gap-3 sm:flex-row sm:justify-end">
-              {step < STEP_COUNT - 1 ? (
+              <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="order-2 w-full justify-center border border-white/14 bg-transparent text-white hover:bg-white/10 hover:text-white sm:order-1 sm:w-auto"
+                  disabled={stickyBackDisabled}
+                  onClick={() => handleStickyBack()}
+                >
+                  Back
+                </Button>
                 <Button
                   type="button"
                   variant="primary"
-                  className="w-full justify-center px-10 sm:w-auto"
-                  disabled={isSubmitting}
-                  onClick={() => void handleNext()}
+                  className="order-1 w-full justify-center px-8 sm:order-2 sm:w-auto"
+                  disabled={stickyPrimaryDisabled}
+                  onClick={() => void handleStickyPrimary()}
                 >
-                  Continue
+                  {stickyPrimaryLabel}
                 </Button>
-              ) : (
-                <Button
-                  type="button"
-                  variant="primary"
-                  className="w-full justify-center px-10 sm:w-auto"
-                  disabled={!canPersistServer || isSubmitting}
-                  onClick={() => void handleFinalSubmit()}
-                >
-                  {isSubmitting ? "Transmitting brief…" : "Submit studio brief"}
-                </Button>
-              )}
+              </div>
             </div>
           </div>
-        </Card>
+        ) : null}
       </form>
     </FormProvider>
   );

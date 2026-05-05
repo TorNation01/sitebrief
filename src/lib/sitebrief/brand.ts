@@ -67,6 +67,19 @@ export function normalizeLogoSrc(raw: string | undefined): string | null {
   return null;
 }
 
+/** Public hostname from `NEXT_PUBLIC_SITE_URL`, for footer / provenance labels. */
+export function getPublicSiteHostname(): string | null {
+  const raw = nonempty(process.env.NEXT_PUBLIC_SITE_URL);
+  if (!raw?.startsWith("http")) {
+    return null;
+  }
+  try {
+    return new URL(raw).hostname;
+  } catch {
+    return null;
+  }
+}
+
 export type ResolvedPublicBrand = {
   appName: string;
   studioDisplayName: string;
@@ -83,9 +96,14 @@ export type ResolvedPublicBrand = {
  * Safe in Server Components and in Client Components (env inlined at build).
  */
 export function getPublicBrand(): ResolvedPublicBrand {
-  const appName = nonempty(process.env.NEXT_PUBLIC_SITEBRIEF_APP_NAME) ?? BRAND_DEFAULTS.appName;
+  const appName =
+    nonempty(process.env.NEXT_PUBLIC_SITEBRIEF_APP_NAME) ??
+    nonempty(process.env.NEXT_PUBLIC_APP_NAME) ??
+    BRAND_DEFAULTS.appName;
   const studioDisplayName =
-    nonempty(process.env.NEXT_PUBLIC_SITEBRIEF_STUDIO_DISPLAY_NAME) ?? BRAND_DEFAULTS.studioDisplayName;
+    nonempty(process.env.NEXT_PUBLIC_SITEBRIEF_STUDIO_DISPLAY_NAME) ??
+    nonempty(process.env.NEXT_PUBLIC_BRAND_OWNER) ??
+    BRAND_DEFAULTS.studioDisplayName;
   const taglineFooter =
     nonempty(process.env.NEXT_PUBLIC_SITEBRIEF_SITE_TAGLINE) ?? BRAND_DEFAULTS.taglineFooter;
   const metaDescription =
@@ -133,6 +151,20 @@ export function getBrandCssVars(): string | null {
 
   const b = getPublicBrand();
   return [`--color-accent: ${b.accent};`, `--color-accent-hover: ${b.accentHover};`].join(" ");
+}
+
+/**
+ * Comma- or semicolon-separated admin inboxes for transactional alerts (`SITEBRIEF_NOTIFICATION_EMAIL`).
+ */
+export function parseNotificationEmailDestinations(): string[] {
+  const raw = nonempty(process.env.SITEBRIEF_NOTIFICATION_EMAIL);
+  if (!raw) {
+    return [];
+  }
+  return raw
+    .split(/[,;]+/)
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0);
 }
 
 /**

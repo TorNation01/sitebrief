@@ -4,7 +4,7 @@ import { Suspense } from "react";
 import { IntakeSuccessView } from "@/components/intake/intake-success-view";
 
 export const metadata: Metadata = {
-  title: "Brief submitted",
+  title: "Website brief submitted",
   robots: { index: false, follow: false },
 };
 

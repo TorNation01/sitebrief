@@ -7,6 +7,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { resolveAdminContinuation } from "@/lib/admin/next-path";
 import { BrandLogoMark } from "@/components/brand/brand-logo-mark";
 import { Button } from "@/components/ui/button";
+import { hasSupabaseBrowserConfig } from "@/lib/env";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { getPublicBrand } from "@/lib/sitebrief/brand";
 
@@ -22,10 +23,18 @@ export function AdminLoginExperience() {
 
   const nextDestination = resolveAdminContinuation(searchParams.get("next"));
   const policyError = searchParams.get("error");
+  const studioConfigured = hasSupabaseBrowserConfig();
 
   async function handleSubmit(evt: FormEvent<HTMLFormElement>) {
     evt.preventDefault();
     setError(null);
+
+    if (!studioConfigured) {
+      setError(
+        "This deployment is missing Supabase configuration. Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY.",
+      );
+      return;
+    }
 
     if (!email.trim() || !password) {
       setError("Email and password both need to be populated.");
@@ -112,6 +121,23 @@ export function AdminLoginExperience() {
             </p>
           </div>
 
+          {policyError === "oauth" ? (
+            <div className="rounded-2xl border border-rose-500/35 bg-rose-950/40 px-5 py-4 text-sm leading-relaxed text-rose-50">
+              OAuth or email-link sign-in did not finish (missing code or exchange failed). Retry from your identity
+              provider, or sign in with email and password. Confirm **`/auth/callback`** is listed under Supabase
+              Authentication redirect URLs for this deployment.
+            </div>
+          ) : null}
+
+          {policyError === "config" ? (
+            <div className="rounded-2xl border border-rose-500/35 bg-rose-950/40 px-5 py-4 text-sm leading-relaxed text-rose-50">
+              The server has no Supabase URL/anon key wired (see <code className="text-xs">.env.example</code>).
+              Admin routes stay locked until{" "}
+              <code className="text-xs">NEXT_PUBLIC_SUPABASE_*</code> is set on this environment and the app is
+              redeployed.
+            </div>
+          ) : null}
+
           {policyError === "forbidden" ? (
             <div className="rounded-2xl border border-amber-500/40 bg-amber-950/50 px-5 py-4 text-sm leading-relaxed text-amber-50">
               Authenticated, but your profile is missing the elevated `admin` role. Ask a super-admin to
@@ -140,9 +166,10 @@ export function AdminLoginExperience() {
                 type="email"
                 autoComplete="email"
                 required
+                disabled={!studioConfigured}
                 value={email}
                 onChange={(evt) => setEmail(evt.target.value)}
-                className="w-full rounded-2xl border border-white/[0.12] bg-black/30 px-4 py-3 text-sm text-white outline-none ring-2 ring-transparent transition focus-visible:ring-[var(--color-accent)]"
+                className="w-full rounded-2xl border border-white/[0.12] bg-black/30 px-4 py-3 text-sm text-white outline-none ring-2 ring-transparent transition focus-visible:ring-[var(--color-accent)] disabled:opacity-45"
               />
             </div>
             <div className="space-y-3">
@@ -154,9 +181,10 @@ export function AdminLoginExperience() {
                 type="password"
                 autoComplete="current-password"
                 required
+                disabled={!studioConfigured}
                 value={password}
                 onChange={(evt) => setPassword(evt.target.value)}
-                className="w-full rounded-2xl border border-white/[0.12] bg-black/30 px-4 py-3 text-sm text-white outline-none ring-2 ring-transparent transition focus-visible:ring-[var(--color-accent)]"
+                className="w-full rounded-2xl border border-white/[0.12] bg-black/30 px-4 py-3 text-sm text-white outline-none ring-2 ring-transparent transition focus-visible:ring-[var(--color-accent)] disabled:opacity-45"
               />
             </div>
           </div>
@@ -165,9 +193,9 @@ export function AdminLoginExperience() {
             type="submit"
             variant="primary"
             className="w-full px-8 py-3 text-sm font-semibold"
-            disabled={pending}
+            disabled={pending || !studioConfigured}
           >
-            {pending ? "Authenticating…" : "Unlock console"}
+            {pending ? "Authenticating…" : studioConfigured ? "Unlock console" : "Awaiting Supabase keys"}
           </Button>
         </form>
       </div>

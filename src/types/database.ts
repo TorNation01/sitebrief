@@ -1,5 +1,7 @@
 /** Generated-style Supabase typings for SiteBrief tables. */
 
+import type { InternalPriceEstimateV1 } from "@/types/price-estimate";
+
 export type Database = {
   public: {
     Tables: {
@@ -68,6 +70,7 @@ export type Database = {
           priority_level: string | null;
           extra_notes: string | null;
           generated_prompt_pack: string | null;
+          internal_price_estimate: InternalPriceEstimateV1 | null;
           status: string;
           created_at: string;
           updated_at: string;
@@ -106,6 +109,7 @@ export type Database = {
           priority_level?: string | null;
           extra_notes?: string | null;
           generated_prompt_pack?: string | null;
+          internal_price_estimate?: InternalPriceEstimateV1 | null;
           status?: string;
           created_at?: string;
           updated_at?: string;
@@ -144,6 +148,7 @@ export type Database = {
           priority_level?: string | null;
           extra_notes?: string | null;
           generated_prompt_pack?: string | null;
+          internal_price_estimate?: InternalPriceEstimateV1 | null;
           status?: string;
           created_at?: string;
           updated_at?: string;
@@ -202,7 +207,7 @@ export type WebsiteIntakeInsert = Database["public"]["Tables"]["website_intakes"
 export type WebsiteIntakeAdminUpdate =
   Pick<
     Database["public"]["Tables"]["website_intakes"]["Update"],
-    "status" | "generated_prompt_pack"
+    "status" | "generated_prompt_pack" | "internal_price_estimate"
   >;
 export type AdminNoteRow = Database["public"]["Tables"]["admin_notes"]["Row"];
 export type AdminNoteInsert = Database["public"]["Tables"]["admin_notes"]["Insert"];
@@ -214,7 +219,13 @@ export type WebsiteIntakeWithClientRow = WebsiteIntakeRow & {
 /** Fields the public intake flow may populate (everything except admin-managed defaults). */
 export type PublicWebsiteIntakeFields = Omit<
   WebsiteIntakeInsert,
-  "id" | "client_id" | "generated_prompt_pack" | "status" | "created_at" | "updated_at"
+  | "id"
+  | "client_id"
+  | "generated_prompt_pack"
+  | "internal_price_estimate"
+  | "status"
+  | "created_at"
+  | "updated_at"
 >;
 
 export type SubmitWebsiteIntakePayload = {

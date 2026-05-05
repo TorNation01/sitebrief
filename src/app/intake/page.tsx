@@ -8,11 +8,14 @@ import { getPublicBrand } from "@/lib/sitebrief/brand";
 const brand = getPublicBrand();
 
 export const metadata: Metadata = {
+  alternates: {
+    canonical: "/intake",
+  },
   title: "Submit your brief",
-  description: `Guided ${brand.appName} intake: validated steps, server-side persistence to Supabase, and spam-resistant submission handling.`,
+  description: `${brand.appName}: a guided, step-by-step website brief from ${brand.studioDisplayName}—clear questions, instant validation, and secure saving as you go.`,
   openGraph: {
     title: `Submit your brief · ${brand.appName}`,
-    description: "Multi-step website project intake with server validation and Supabase storage.",
+    description: `Premium guided briefing from ${brand.studioDisplayName}: structured chapters, clarity over jargon, and a smooth path from idea to actionable scope.`,
   },
 };
 
@@ -31,10 +34,10 @@ export default function IntakePage() {
               Shape your website project with intention.
             </h1>
             <p className="mt-4 max-w-3xl text-sm leading-relaxed text-white/70 sm:text-base">
-              Eleven focused chapters capture the decision trail your build team needs—contact
-              guardrails, strategic goals, UI guardrails, technical dependencies, and commercial
-              constraints. Each step validates before you continue, and the finale writes directly to
-              Supabase with RLS-aware inserts.
+              Eleven focused chapters capture what your delivery team actually needs—from contact and goals
+              to design direction, integrations, timelines, and budget guardrails. Each step confirms the
+              essentials before you continue, then saves your answers securely so nothing gets lost along
+              the way.
             </p>
           </div>
           <ButtonLink href="/" variant="secondary" className="self-start px-5">

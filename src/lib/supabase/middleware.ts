@@ -16,7 +16,18 @@ function forwardCookies(from: NextResponse, to: NextResponse) {
  * Refreshes auth cookies and shields `/admin` behind Supabase Authentication + SiteBrief admin role claims.
  */
 export async function updateSession(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+  const visitingAdminLogin = pathname.startsWith("/admin/login");
+
   if (!hasSupabaseBrowserConfig()) {
+    if (pathname.startsWith("/admin") && !visitingAdminLogin) {
+      const redirectUrl = request.nextUrl.clone();
+      redirectUrl.pathname = "/admin/login";
+      redirectUrl.search = "";
+      redirectUrl.searchParams.set("error", "config");
+      return NextResponse.redirect(redirectUrl);
+    }
+
     return NextResponse.next({ request });
   }
 
@@ -47,12 +58,8 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const { pathname } = request.nextUrl;
-
   if (pathname.startsWith("/admin")) {
-    const visitingLogin = pathname.startsWith("/admin/login");
-
-    if (!visitingLogin) {
+    if (!visitingAdminLogin) {
       if (!user || !isSiteBriefAdminUser(user)) {
         const redirectUrl = request.nextUrl.clone();
         redirectUrl.pathname = "/admin/login";

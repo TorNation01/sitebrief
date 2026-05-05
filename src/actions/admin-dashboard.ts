@@ -3,12 +3,14 @@
 import { revalidatePath } from "next/cache";
 
 import { isSiteBriefAdminUser } from "@/lib/auth/sitebrief-admin";
+import { buildInternalPriceEstimate } from "@/lib/sitebrief/build-internal-price-estimate";
 import { buildCursorPromptPackMarkdown } from "@/lib/sitebrief/build-cursor-prompt-pack";
 import { insertAdminNote, updateWebsiteIntakeAdminFields } from "@/lib/sitebrief/mutations";
 import { fetchWebsiteIntakeWithClientById } from "@/lib/sitebrief/queries";
 import type { SiteBriefClient } from "@/lib/sitebrief/supabase-brand";
 import { isWorkflowStatus } from "@/lib/sitebrief/workflow-status";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { internalPriceEstimateV1Schema, type InternalPriceEstimateV1 } from "@/types/price-estimate";
 
 type StudioGuardResult =
   | { error: string }
@@ -123,6 +125,47 @@ export async function regenerateCursorPromptPackAction(
     return { markdown };
   } catch (error) {
     return { error: formatActionError(error, "Unable to persist the prompt pack.") };
+  }
+}
+
+export async function regenerateInternalPriceEstimateAction(
+  intakeId: string,
+): Promise<{ error?: string; estimate?: InternalPriceEstimateV1 }> {
+  if (!intakeId) {
+    return { error: "Submission reference missing." };
+  }
+  const malformed = assertValidIntakeId(intakeId);
+  if (malformed) {
+    return { error: malformed };
+  }
+
+  const guard = await requireStudioSupabase();
+  if ("error" in guard) {
+    return { error: guard.error };
+  }
+
+  try {
+    const dossier = await fetchWebsiteIntakeWithClientById(guard.supabase, intakeId);
+    if (!dossier?.clients) {
+      return { error: "That submission no longer exists." };
+    }
+
+    const estimate = buildInternalPriceEstimate(dossier);
+    const parsed = internalPriceEstimateV1Schema.safeParse(estimate);
+    if (!parsed.success) {
+      return { error: "Generated estimate failed validation — contact engineering." };
+    }
+
+    await updateWebsiteIntakeAdminFields(guard.supabase, intakeId, {
+      internal_price_estimate: parsed.data,
+    });
+
+    revalidatePath("/admin");
+    revalidatePath(`/admin/intakes/${intakeId}`);
+
+    return { estimate: parsed.data };
+  } catch (error) {
+    return { error: formatActionError(error, "Unable to persist the price estimate.") };
   }
 }
 

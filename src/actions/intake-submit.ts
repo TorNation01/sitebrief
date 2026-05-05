@@ -8,6 +8,7 @@ import {
   sanitizeIntakeSelections,
   stripIntakeFormHoneypot,
 } from "@/components/intake/intake-schema";
+import { notifyIntakeSubmissionEmails } from "@/lib/email/intake-submission-mail";
 import { getSupabasePublicEnv } from "@/lib/env";
 import { insertWebsiteIntakeSubmission } from "@/lib/sitebrief/mutations";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -63,6 +64,16 @@ export async function submitWebsiteIntakeAction(
     const supabase = await createSupabaseServerClient();
     const { intakeId } = await insertWebsiteIntakeSubmission(supabase, dbPayload);
     revalidatePath("/admin");
+
+    void notifyIntakeSubmissionEmails({
+      intakeId,
+      businessName: dbPayload.client.business_name,
+      contactName: dbPayload.client.contact_name,
+      contactEmail: dbPayload.client.email,
+      websiteGoal: dbPayload.intake.website_goal ?? "",
+      budgetRange: dbPayload.intake.budget_range ?? "",
+    });
+
     return { ok: true, intakeId };
   } catch (cause) {
     const message =

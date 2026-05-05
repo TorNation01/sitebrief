@@ -40,6 +40,8 @@ Anonymous clients therefore **cannot** list or scrape intakes unless they authen
 
 The migration grants DML rights on these tables to **`anon`** and **`authenticated`** at the privilege level; **RLS still filters** which rows each role can see or change. Do not disable RLS in production without replacing it with another enforcement layer.
 
+After migration **`20260506120000_internal_price_estimate.sql`**, `website_intakes.internal_price_estimate` holds **studio-only JSON** generated from the admin intake detail view. The same RLS row access applies: **`anon` never reads** intake rows; public **INSERT** leaves this column **null** unless you change the app.
+
 ## Operational checks
 
 - If public intake fails with **RLS or permission** errors, confirm insert policies exist and the request uses the **anon key** (or an authenticated user that is still allowed to insert per policy).

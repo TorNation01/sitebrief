@@ -25,7 +25,7 @@ export const metadata: Metadata = {
       ? new URL(process.env.NEXT_PUBLIC_SITE_URL)
       : undefined,
   title: {
-    default: `${brand.appName} — Website intake for agencies`,
+    default: `${brand.appName} — Website briefing · ${brand.studioDisplayName}`,
     template: `%s · ${brand.appName}`,
   },
   description: brand.metaDescription,
@@ -34,13 +34,18 @@ export const metadata: Metadata = {
   robots: { index: true, follow: true },
   openGraph: {
     type: "website",
+    url:
+      typeof process.env.NEXT_PUBLIC_SITE_URL === "string" &&
+      process.env.NEXT_PUBLIC_SITE_URL.startsWith("http")
+        ? process.env.NEXT_PUBLIC_SITE_URL
+        : undefined,
     siteName: brand.appName,
-    title: `${brand.appName} — Website intake for agencies`,
+    title: `${brand.appName} — Website briefing · ${brand.studioDisplayName}`,
     description: brand.metaDescription,
   },
   twitter: {
     card: "summary_large_image",
-    title: brand.appName,
+    title: `${brand.appName} · ${brand.studioDisplayName}`,
     description: brand.metaDescription,
   },
 };
