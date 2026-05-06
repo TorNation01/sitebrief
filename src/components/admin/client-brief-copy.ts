@@ -1,4 +1,5 @@
 import type { ClientRow, WebsiteIntakeRow } from "@/types/database";
+import { labelForBudgetRangeSlug } from "@/lib/sitebrief/budget-range";
 import { getPublicBrand } from "@/lib/sitebrief/brand";
 import { coerceWorkflowStatus } from "@/lib/sitebrief/workflow-status";
 
@@ -17,7 +18,9 @@ export function composeClientBriefBundle(client: ClientRow, intake: WebsiteIntak
       ? `Live reference site: ${client.website}`
       : "Live reference site: Not specified",
     `Workflow status inside studio: ${status}`,
-    intake.budget_range ? `Investment band: ${intake.budget_range}` : "Investment band: Not specified",
+    intake.budget_range
+      ? `Investment band: ${labelForBudgetRangeSlug(intake.budget_range)}`
+      : "Investment band: Not specified",
     intake.deadline ? `Stakeholder-facing launch window: ${intake.deadline}` : "Launch expectation: Flexible / TBD",
     "",
     "--- Intake payloads ---",

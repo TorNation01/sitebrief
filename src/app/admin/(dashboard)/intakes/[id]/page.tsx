@@ -2,7 +2,14 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { SubmissionStudioDetail } from "@/components/admin/submission-studio-detail";
-import { fetchAdminNotesForIntake, fetchStudioSubscription, fetchWebsiteIntakeWithClientById } from "@/lib/sitebrief/queries";
+import { computeRevisionAllowance } from "@/lib/sitebrief/revision-allowance";
+import {
+  fetchAdminNotesForIntake,
+  fetchRevisionRoundsBundleForIntakeAdmin,
+  fetchStudioSubscription,
+  fetchWebsiteIntakeWithClientById,
+} from "@/lib/sitebrief/queries";
+import { parseStoredPriceEstimate } from "@/types/price-estimate";
 import { parseSubscriptionTier } from "@/types/subscription";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -39,5 +46,21 @@ export default async function AdminSubmissionDetailRoute({ params }: IntakeStudi
   const sub = await fetchStudioSubscription(supabase);
   const subscriptionTier = parseSubscriptionTier(sub?.subscription_tier);
 
-  return <SubmissionStudioDetail record={dossier} notes={notes} subscriptionTier={subscriptionTier} />;
+  const revisionRounds = await fetchRevisionRoundsBundleForIntakeAdmin(supabase, dossier.id);
+  const estimate = parseStoredPriceEstimate(dossier.internal_price_estimate);
+  const revisionAllowance = computeRevisionAllowance({
+    estimate,
+    extraRevisionRoundsPurchased: dossier.extra_revision_rounds_purchased ?? 0,
+    roundsCreated: revisionRounds.length,
+  });
+
+  return (
+    <SubmissionStudioDetail
+      record={dossier}
+      notes={notes}
+      subscriptionTier={subscriptionTier}
+      revisionRounds={revisionRounds}
+      revisionAllowance={revisionAllowance}
+    />
+  );
 }

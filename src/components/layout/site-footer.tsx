@@ -32,6 +32,9 @@ export function SiteFooter() {
             <Link href="/intake" className="text-white/65 transition-colors hover:text-[var(--color-accent)]">
               Start brief
             </Link>
+            <Link href="/contact" className="text-white/65 transition-colors hover:text-[var(--color-accent)]">
+              Contact us
+            </Link>
             <Link href="/legal/terms" className="text-white/65 transition-colors hover:text-[var(--color-accent)]">
               Terms &amp; Conditions
             </Link>

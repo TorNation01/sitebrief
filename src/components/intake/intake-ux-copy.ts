@@ -181,10 +181,11 @@ const PRIORITY_SIMPLE: Record<string, { simple: string }> = {
 
 const BUDGET_SIMPLE: Record<string, { simple: string }> = {
   "": { simple: "Choose a budget band" },
-  "under-25k-usd": { simple: "Under ~$25k USD total" },
-  "25k-55k-usd": { simple: "~$25k–$55k USD total" },
-  "55k-115k-usd": { simple: "~$55k–$115k USD total" },
-  "115k-plus-usd": { simple: "~$115k USD and up" },
+  "under-1500-aud": { simple: "Under about $1,500 AUD" },
+  "1500-3500-aud": { simple: "About $1,500–$3,500 AUD" },
+  "3500-7000-aud": { simple: "About $3,500–$7,000 AUD" },
+  "7000-15000-aud": { simple: "About $7,000–$15,000 AUD" },
+  "not-sure-yet": { simple: "Not sure yet—help me pick a band" },
 };
 
 export function getContentStatusOptions(

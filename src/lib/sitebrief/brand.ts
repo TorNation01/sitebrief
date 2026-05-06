@@ -80,6 +80,19 @@ export function getPublicSiteHostname(): string | null {
   }
 }
 
+/** Absolute site origin (no trailing slash) for share links and transactional email. */
+export function getPublicSiteOrigin(): string | null {
+  const site = nonempty(process.env.NEXT_PUBLIC_SITE_URL);
+  if (site?.startsWith("http")) {
+    return site.replace(/\/$/, "");
+  }
+  const vercel = process.env.VERCEL_URL?.trim();
+  if (vercel) {
+    return `https://${vercel.replace(/\/$/, "")}`;
+  }
+  return null;
+}
+
 export type ResolvedPublicBrand = {
   appName: string;
   studioDisplayName: string;

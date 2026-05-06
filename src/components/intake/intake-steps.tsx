@@ -28,6 +28,7 @@ import {
   IntakeFormValues,
   SERVICES_OPTIONS,
 } from "@/components/intake/intake-schema";
+import { BUDGET_RANGE_LABELS, BUDGET_RANGE_SLUGS } from "@/lib/sitebrief/budget-range";
 
 const checklistBoxClass =
   "mt-1 h-4 w-4 shrink-0 rounded border border-zinc-300 accent-[color:color-mix(in_srgb,var(--color-accent)_80%,black)]";
@@ -198,26 +199,11 @@ export const PRIORITY_OPTIONS = [
 
 export const BUDGET_OPTIONS: IntakeSelectChoice[] = [
   { value: "", label: "Choose a budget band", disabled: true },
-  {
-    value: "under-25k-usd",
-    label: "Under $25k USD invested across build plus integrations",
+  ...BUDGET_RANGE_SLUGS.map((slug) => ({
+    value: slug,
+    label: BUDGET_RANGE_LABELS[slug],
     disabled: false,
-  },
-  {
-    value: "25k-55k-usd",
-    label: "$25k–$55k USD all-in engagements",
-    disabled: false,
-  },
-  {
-    value: "55k-115k-usd",
-    label: "$55k–$115k USD programs with nuanced IA/compliance",
-    disabled: false,
-  },
-  {
-    value: "115k-plus-usd",
-    label: "$115k USD+ multi-phase transformational programs",
-    disabled: false,
-  },
+  })),
 ];
 
 function CheckboxList(props: {
@@ -910,7 +896,7 @@ export function IntakeStepFields({ stepIndex }: { stepIndex: number }) {
             label={L("Budget allocation for this chapter", "Rough project budget")}
             hint={L(
               "Ranges are directional—helps triage sequencing and partner fit.",
-              "Approximate range in USD—helps us suggest a realistic path.",
+              "Approximate range in AUD—helps us suggest a realistic path.",
             )}
             required
             fieldName="budget_range"

@@ -2,6 +2,9 @@ import type { SiteBriefClient } from "@/lib/sitebrief/supabase-brand";
 import type {
   AdminNoteRow,
   ClientRow,
+  RevisionItemRow,
+  RevisionPromptRow,
+  RevisionRoundRow,
   StudioSubscriptionRow,
   WebsiteIntakeRow,
   WebsiteIntakeWithClientRow,
@@ -109,4 +112,31 @@ export async function fetchStudioSubscription(
 
   throwIfPresent(error);
   return data ?? null;
+}
+
+export type RevisionRoundWithChildren = RevisionRoundRow & {
+  revision_items: RevisionItemRow[];
+  revision_prompts: RevisionPromptRow[];
+};
+
+/** Revision rounds + nested items/prompts for admin intake dossier. Requires admin JWT. */
+export async function fetchRevisionRoundsBundleForIntakeAdmin(
+  admin: SiteBriefClient,
+  intakeId: string,
+): Promise<RevisionRoundWithChildren[]> {
+  const { data, error } = await admin
+    .from("revision_rounds")
+    .select("*, revision_items(*), revision_prompts(*)")
+    .eq("intake_id", intakeId)
+    .order("round_number", { ascending: true });
+
+  throwIfPresent(error);
+  const rows = (data ?? []) as RevisionRoundWithChildren[];
+  for (const row of rows) {
+    row.revision_items = [...(row.revision_items ?? [])].sort((a, b) => a.created_at.localeCompare(b.created_at));
+    row.revision_prompts = [...(row.revision_prompts ?? [])].sort((a, b) =>
+      b.created_at.localeCompare(a.created_at),
+    );
+  }
+  return rows;
 }

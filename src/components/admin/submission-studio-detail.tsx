@@ -6,6 +6,7 @@ import { CopyClientBriefButton } from "@/components/admin/copy-client-brief-butt
 import { ExportFullPackToolbar } from "@/components/admin/export-full-pack-toolbar";
 import { IntakeDecisionPanel } from "@/components/admin/intake-decision-panel";
 import { InternalPriceEstimatePanel } from "@/components/admin/internal-price-estimate-panel";
+import { IntakeRevisionsPanel } from "@/components/admin/intake-revisions-panel";
 import { PromptPackWorkbench } from "@/components/admin/prompt-pack-workbench";
 import { SUBMISSION_FIELD_BLUEPRINT } from "@/components/admin/submission-detail-matrix";
 import { SubmissionNoteComposer } from "@/components/admin/submission-note-composer";
@@ -13,6 +14,8 @@ import { SubmissionStatusSwitcher } from "@/components/admin/submission-status-s
 import { buildFullClientPackMarkdown, sanitizePackFileStem } from "@/lib/sitebrief/build-full-client-pack-md";
 import { parseNotificationEmailDestinations } from "@/lib/sitebrief/brand";
 import { coerceWorkflowStatus, isWorkflowStatus } from "@/lib/sitebrief/workflow-status";
+import type { RevisionRoundWithChildren } from "@/lib/sitebrief/queries";
+import type { RevisionAllowance } from "@/lib/sitebrief/revision-allowance";
 import type { AdminNoteRow, WebsiteIntakeWithClientRow } from "@/types/database";
 import {
   canExportFullClientPack,
@@ -24,6 +27,8 @@ type SubmissionStudioDetailProps = {
   record: WebsiteIntakeWithClientRow;
   notes: AdminNoteRow[];
   subscriptionTier: SubscriptionTier;
+  revisionRounds: RevisionRoundWithChildren[];
+  revisionAllowance: RevisionAllowance;
 };
 
 function formatTimeline(value: string) {
@@ -48,7 +53,13 @@ function renderField(value: string | null | undefined) {
   return trimmed;
 }
 
-export function SubmissionStudioDetail({ record, notes, subscriptionTier }: SubmissionStudioDetailProps) {
+export function SubmissionStudioDetail({
+  record,
+  notes,
+  subscriptionTier,
+  revisionRounds,
+  revisionAllowance,
+}: SubmissionStudioDetailProps) {
   if (!record.clients) {
     notFound();
   }
@@ -137,6 +148,12 @@ export function SubmissionStudioDetail({ record, notes, subscriptionTier }: Subm
         businessName={record.clients.business_name}
         stored={record.internal_price_estimate}
         pricingEngineEnabled={pricingEngineEnabled}
+      />
+
+      <IntakeRevisionsPanel
+        intakeId={record.id}
+        allowance={revisionAllowance}
+        initialRounds={revisionRounds}
       />
 
       <ClientMaterialsHandoff

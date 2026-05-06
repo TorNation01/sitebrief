@@ -1,3 +1,4 @@
+import { budgetCeilingAudFromSlug } from "@/lib/sitebrief/budget-range";
 import type { WebsiteIntakeRow } from "@/types/database";
 import {
   estimatePriceMaxAud,
@@ -21,27 +22,17 @@ export type IntakeDecisionResult = {
   signals: string[];
 };
 
-const AUD_PER_USD = 1.55;
-
-/** Rough maximum communicated budget ceiling in AUD from intake slug (heuristic). */
-function budgetCeilingAudFromSlug(slug: string | null | undefined): number | null {
-  const s = slug?.trim() ?? "";
-  if (!s) {
-    return null;
+function budgetMismatchTolerance(slug: string): number {
+  if (slug === "under-1500-aud") {
+    return 1.06;
   }
-  if (s.includes("under-25k")) {
-    return Math.round(25_000 * AUD_PER_USD);
+  if (slug === "1500-3500-aud") {
+    return 1.08;
   }
-  if (s.includes("25k-55k")) {
-    return Math.round(55_000 * AUD_PER_USD);
+  if (slug === "3500-7000-aud") {
+    return 1.09;
   }
-  if (s.includes("55k-115k")) {
-    return Math.round(115_000 * AUD_PER_USD);
-  }
-  if (s.includes("115k-plus")) {
-    return Math.round(250_000 * AUD_PER_USD);
-  }
-  return null;
+  return 1.1;
 }
 
 function nz(value: string | null | undefined): string {
@@ -137,8 +128,7 @@ export function computeIntakeDecisionPanel(
     const aggregatedRed = `${estimateTimelineLabel(estimate)}\n${estimate.redFlags.join("\n")}`;
 
     let budgetMisaligned =
-      ceilingAud !== null &&
-      minAud > ceilingAud * (budgetSlug.includes("under-25k") ? 1.06 : budgetSlug.includes("25k-55k") ? 1.08 : 1.1);
+      ceilingAud !== null && minAud > ceilingAud * budgetMismatchTolerance(budgetSlug);
 
     if (/\bbudget\b.*(reality check|skew|ceiling)/i.test(aggregatedRed)) {
       budgetMisaligned = true;
@@ -155,13 +145,20 @@ export function computeIntakeDecisionPanel(
           ? `Estimated minimum (${minAud.toLocaleString("en-AU")} AUD)${tierNote} clears the client's stated ceiling (~${ceilingAud.toLocaleString("en-AU")} AUD).`
           : `Estimated minimum (${minAud.toLocaleString("en-AU")} AUD)${tierNote} clashes with communicated budget framing.`,
       );
-    } else if (estimate.version === 2 && tierLabel && maxAud >= 7_000 && budgetSlug.includes("under-25k")) {
+    } else if (
+      estimate.version === 2 &&
+      tierLabel &&
+      maxAud >= 7_000 &&
+      (budgetSlug === "under-1500-aud" ||
+        budgetSlug === "1500-3500-aud" ||
+        budgetSlug === "3500-7000-aud")
+    ) {
       signals.push(
-        `${tierLabel} tier tops out around ${maxAud.toLocaleString("en-AU")} AUD on the heuristic—still sanity-check against the client's under-$25k USD band.`,
+        `${tierLabel} tier tops out around ${maxAud.toLocaleString("en-AU")} AUD on the heuristic—still sanity-check against the client's stated budget band.`,
       );
     }
   } else if (
-    budgetSlug.includes("under-25k") &&
+    (budgetSlug === "under-1500-aud" || budgetSlug === "1500-3500-aud") &&
     /\b(member|portal|e-?commerce|marketplace|multi-?tenant|saas|subscription)\b/i.test(corp)
   ) {
     risks.push("budget_too_low");
@@ -192,7 +189,7 @@ export function computeIntakeDecisionPanel(
   } else if (has("scope_unclear")) {
     recommendedAction = "follow_up";
   } else {
-    const premiumBudget = budgetSlug.includes("115k-plus") || budgetSlug.includes("55k-115k");
+    const premiumBudget = budgetSlug === "7000-15000-aud";
     const urgency = /\bdeadline-hard\b/i.test(`${intake.priority_level}`) || /\b(days?|weeks?)\s+until\b/i.test(corp);
     const depthOk = wordCount(goal) >= 28 && wordCount(`${pages}\n${features}`) >= 28;
 

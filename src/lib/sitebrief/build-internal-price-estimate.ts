@@ -330,7 +330,13 @@ function buildRedFlags(
     flags.push('"Immovable date" + upper tiers → align on phased delivery or premium staffing.');
   }
 
-  if (record.budget_range?.includes("under-25k") && totalScore >= 11 && priceMax >= 3_500) {
+  if (
+    (record.budget_range === "under-1500-aud" ||
+      record.budget_range === "1500-3500-aud" ||
+      record.budget_range === "3500-7000-aud") &&
+    totalScore >= 11 &&
+    priceMax >= 3_500
+  ) {
     flags.push("Stated budget band is modest versus Professional / Custom score—confirm budget or descope before quoting.");
   }
 

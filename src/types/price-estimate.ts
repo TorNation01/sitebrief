@@ -12,6 +12,8 @@ export const INTERNAL_PRICE_TIER_DEFINITIONS = [
     priceMinAud: 500,
     priceMaxAud: 1_500,
     deliveryEstimate: "2–5 days",
+    includedRevisionRounds: 1,
+    extraRevisionRoundPriceAud: 150,
   },
   {
     name: "Business" as const,
@@ -19,6 +21,8 @@ export const INTERNAL_PRICE_TIER_DEFINITIONS = [
     priceMinAud: 1_500,
     priceMaxAud: 3_500,
     deliveryEstimate: "1–2 weeks",
+    includedRevisionRounds: 2,
+    extraRevisionRoundPriceAud: 150,
   },
   {
     name: "Professional" as const,
@@ -26,6 +30,8 @@ export const INTERNAL_PRICE_TIER_DEFINITIONS = [
     priceMinAud: 3_500,
     priceMaxAud: 7_000,
     deliveryEstimate: "2–3 weeks",
+    includedRevisionRounds: 3,
+    extraRevisionRoundPriceAud: 150,
   },
   {
     name: "Custom" as const,
@@ -33,6 +39,8 @@ export const INTERNAL_PRICE_TIER_DEFINITIONS = [
     priceMinAud: 7_000,
     priceMaxAud: 15_000,
     deliveryEstimate: "3–6 weeks (scope may exceed $15,000 AUD)",
+    includedRevisionRounds: 5,
+    extraRevisionRoundPriceAud: 150,
   },
 ] as const satisfies ReadonlyArray<{
   name: PriceTierName;
@@ -40,9 +48,22 @@ export const INTERNAL_PRICE_TIER_DEFINITIONS = [
   priceMinAud: number;
   priceMaxAud: number;
   deliveryEstimate: string;
+  includedRevisionRounds: number;
+  extraRevisionRoundPriceAud: number;
 }>;
 
 export type InternalPriceTierDefinition = (typeof INTERNAL_PRICE_TIER_DEFINITIONS)[number];
+
+/** Included revision rounds for a tier name from the internal estimate (defaults to Starter). */
+export function includedRevisionRoundsForTierName(tierName: string | null | undefined): number {
+  const row = INTERNAL_PRICE_TIER_DEFINITIONS.find((t) => t.name === tierName);
+  return row?.includedRevisionRounds ?? INTERNAL_PRICE_TIER_DEFINITIONS[0].includedRevisionRounds;
+}
+
+export function extraRevisionRoundPriceAudForTier(tierName: string | null | undefined): number {
+  const row = INTERNAL_PRICE_TIER_DEFINITIONS.find((t) => t.name === tierName);
+  return row?.extraRevisionRoundPriceAud ?? INTERNAL_PRICE_TIER_DEFINITIONS[0].extraRevisionRoundPriceAud;
+}
 
 /** Stored in `website_intakes.internal_price_estimate` (admin-only JSON). Legacy v1. */
 export const internalPriceEstimateV1Schema = z.object({

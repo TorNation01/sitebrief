@@ -1,6 +1,7 @@
 import type { FieldPath, UseFormReturn } from "react-hook-form";
 import { z } from "zod";
 
+import { BUDGET_RANGE_SLUGS } from "@/lib/sitebrief/budget-range";
 import type { SubmitWebsiteIntakePayload } from "@/types/database";
 
 export const SERVICES_OPTIONS = [
@@ -90,7 +91,12 @@ export const intakeFormSchema = z.object({
   future_expansion: optionalText,
   ai_selected: z.array(z.string()).default([]),
   ai_detail: optionalText,
-  budget_range: z.string().trim().min(1, "Select a budget range").max(TEXT_SHORT),
+  budget_range: z
+    .string()
+    .trim()
+    .min(1, "Select a budget range")
+    .max(TEXT_SHORT)
+    .refine((v) => (BUDGET_RANGE_SLUGS as readonly string[]).includes(v), { message: "Select a budget range" }),
   deadline: optionalText.refine((value) => {
     const t = value.trim();
     return !t.length || !Number.isNaN(Date.parse(t));
