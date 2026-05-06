@@ -9,6 +9,9 @@ import { SITE_VERCEL_EVENTS, trackSiteVercelEvent } from "@/components/analytics
 import { IntakeReviewSummary } from "@/components/intake/intake-review-summary";
 import { IntakeStepFields } from "@/components/intake/intake-steps";
 import { IntakeWalkthroughIntro } from "@/components/intake/intake-walkthrough-intro";
+import { getIntakeStepHeader } from "@/components/intake/intake-ux-copy";
+import { IntakeUxModeProvider, useIntakeUxMode } from "@/components/intake/intake-ux-mode";
+import { IntakeUxModeToggle } from "@/components/intake/intake-ux-mode-toggle";
 import {
   applyZodIssuesToForm,
   intakeFormHoneypotWasTriggered,
@@ -65,8 +68,9 @@ function formatUnknownActionError(payload: unknown) {
   return "Something went wrong while saving—please retry in a minute.";
 }
 
-export function IntakeWizard({ supabaseConfigured }: IntakeWizardProps) {
+function IntakeWizardInner({ supabaseConfigured }: IntakeWizardProps) {
   const router = useRouter();
+  const { mode } = useIntakeUxMode();
   const [phase, setPhase] = useState<IntakePhase>("intro");
   const [step, setStep] = useState(0);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -95,8 +99,9 @@ export function IntakeWizard({ supabaseConfigured }: IntakeWizardProps) {
 
   const stepProgressPct =
     phase === "review" ? 100 : Math.round(((step + 1) / STEP_COUNT) * 100);
+  const stepHeaderForSticky = getIntakeStepHeader(mode, step);
   const stickyStepTitle =
-    phase === "review" ? "Review answers" : INTAKE_STEPS[step].title;
+    phase === "review" ? "Review answers" : stepHeaderForSticky.title;
   const showStickyNav = phase === "steps" || phase === "review";
 
   const validateCurrentStep = useCallback(async () => {
@@ -233,8 +238,6 @@ export function IntakeWizard({ supabaseConfigured }: IntakeWizardProps) {
     scrollToTopSmooth();
   }, []);
 
-  const meta = INTAKE_STEPS[step];
-
   const stickyBackDisabled =
     isSubmitting || (phase === "steps" && step === 0);
 
@@ -312,10 +315,10 @@ export function IntakeWizard({ supabaseConfigured }: IntakeWizardProps) {
                     Step {step + 1} of {STEP_COUNT}
                   </p>
                   <h2 className="mt-4 text-balance text-3xl font-semibold text-white sm:text-4xl">
-                    {meta.title}
+                    {stepHeader.title}
                   </h2>
-                  <p className="mt-3 max-w-2xl text-sm leading-relaxed text-white/68 sm:text-base">
-                    {meta.description}
+                  <p className="mt-3 max-w-2xl text-base leading-relaxed text-white/72 sm:text-lg">
+                    {stepHeader.description}
                   </p>
                 </div>
               </div>
@@ -345,7 +348,10 @@ export function IntakeWizard({ supabaseConfigured }: IntakeWizardProps) {
 
         {showStickyNav ? (
           <div className="fixed inset-x-0 bottom-0 z-40 border-t border-white/[0.12] bg-[#0f0f12]/92 px-4 py-4 shadow-[0_-12px_40px_rgba(0,0,0,0.35)] backdrop-blur-md pb-[calc(1rem+env(safe-area-inset-bottom))]">
-            <div className="mx-auto flex w-full max-w-5xl flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="mx-auto flex w-full max-w-5xl flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              <div className="min-w-0 shrink-0 lg:max-w-[220px]">
+                <IntakeUxModeToggle variant="compact" />
+              </div>
               <div className="min-w-0 flex-1 space-y-2">
                 <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
                   <p className="truncate text-base font-semibold text-white">{stickyStepTitle}</p>
@@ -393,5 +399,13 @@ export function IntakeWizard({ supabaseConfigured }: IntakeWizardProps) {
         ) : null}
       </form>
     </FormProvider>
+  );
+}
+
+export function IntakeWizard(props: IntakeWizardProps) {
+  return (
+    <IntakeUxModeProvider>
+      <IntakeWizardInner {...props} />
+    </IntakeUxModeProvider>
   );
 }

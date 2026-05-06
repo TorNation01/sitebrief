@@ -3,19 +3,19 @@ import { LandingSection } from "@/components/landing/landing-section";
 const PHASES = [
   {
     title: "We review your answers",
-    body: "We read your briefing end-to-end and note ambiguities or opportunities worth clarifying.",
+    body: "We read your briefing end-to-end and note anything we should clarify before we commit to a build plan.",
   },
   {
-    title: "We map out the best structure",
-    body: "We translate your goals into a sensible information architecture—pages, priorities, flows.",
+    title: "We map structure and scope",
+    body: "We translate your goals into a sensible page map, priorities, and flows so the website build stays aligned.",
   },
   {
-    title: "We provide a clear project scope",
-    body: "You receive a distilled plan: milestones, assumptions, and what good delivery looks like.",
+    title: "We align on the build plan",
+    body: "You receive a clear view of what we will design and build, milestones, assumptions, and what delivery looks like—including how the site will be launched when it is ready.",
   },
   {
-    title: "We suggest practical next steps",
-    body: "Whether that is design, technical discovery, content, or a phased launch—we spell it out.",
+    title: "We move into delivery when you are ready",
+    body: "Once you approve the plan and commercials, our team progresses through design, build, QA, and go-live support—keeping you in the loop at each stage.",
   },
 ] as const;
 
@@ -23,7 +23,7 @@ export function LandingAfterSubmit() {
   return (
     <LandingSection className="border-y border-white/[0.05] bg-black/[0.18] py-16 sm:py-20 lg:py-[5.75rem]">
       <div className="mx-auto max-w-2xl text-center">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--color-accent)]">
+        <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[var(--color-accent)]">
           After you submit
         </p>
         <h2 className="mt-4 text-balance text-2xl font-semibold text-white sm:text-3xl lg:text-[2rem]">
@@ -44,7 +44,7 @@ export function LandingAfterSubmit() {
             </span>
             <div className="min-w-0">
               <h3 className="text-lg font-semibold tracking-tight text-white">{phase.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-white/65">{phase.body}</p>
+              <p className="mt-2 text-base leading-relaxed text-white/70">{phase.body}</p>
             </div>
           </li>
         ))}

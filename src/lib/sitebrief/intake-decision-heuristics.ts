@@ -1,5 +1,11 @@
 import type { WebsiteIntakeRow } from "@/types/database";
-import type { InternalPriceEstimateV1 } from "@/types/price-estimate";
+import {
+  estimatePriceMaxAud,
+  estimatePriceMinAud,
+  estimateTierName,
+  estimateTimelineLabel,
+  type StoredInternalPriceEstimate,
+} from "@/types/price-estimate";
 
 export type RecommendedAction = "reject" | "follow_up" | "quote" | "fast_track";
 
@@ -66,10 +72,11 @@ function corpus(intake: WebsiteIntakeRow): string {
 
 /**
  * Lightweight triage readout for admins. Outputs are advisory and not persisted.
+ * When a v2 tiered estimate exists, budget checks use its AUD band (Starter / Business / Professional / Custom).
  */
 export function computeIntakeDecisionPanel(
   intake: WebsiteIntakeRow,
-  estimate: InternalPriceEstimateV1 | null,
+  estimate: StoredInternalPriceEstimate | null,
 ): IntakeDecisionResult {
   const risks: RiskIndicator[] = [];
   const signals: string[] = [];
@@ -124,8 +131,10 @@ export function computeIntakeDecisionPanel(
   }
 
   if (estimate) {
-    const minAud = estimate.priceRangeAud.min;
-    const aggregatedRed = `${estimate.timeline}\n${estimate.redFlags.join("\n")}`;
+    const minAud = estimatePriceMinAud(estimate);
+    const maxAud = estimatePriceMaxAud(estimate);
+    const tierLabel = estimateTierName(estimate);
+    const aggregatedRed = `${estimateTimelineLabel(estimate)}\n${estimate.redFlags.join("\n")}`;
 
     let budgetMisaligned =
       ceilingAud !== null &&
@@ -137,10 +146,18 @@ export function computeIntakeDecisionPanel(
 
     if (budgetMisaligned) {
       risks.push("budget_too_low");
+      const tierNote =
+        estimate.version === 2 && tierLabel
+          ? ` (${tierLabel} tier heuristic floor ${minAud.toLocaleString("en-AU")} AUD)`
+          : "";
       signals.push(
         ceilingAud !== null
-          ? `Estimated minimum (${minAud.toLocaleString()} AUD) clears the client's stated ceiling (~${ceilingAud.toLocaleString()} AUD).`
-          : `Estimated minimum (${minAud.toLocaleString()} AUD) clashes with communicated budget framing.`,
+          ? `Estimated minimum (${minAud.toLocaleString("en-AU")} AUD)${tierNote} clears the client's stated ceiling (~${ceilingAud.toLocaleString("en-AU")} AUD).`
+          : `Estimated minimum (${minAud.toLocaleString("en-AU")} AUD)${tierNote} clashes with communicated budget framing.`,
+      );
+    } else if (estimate.version === 2 && tierLabel && maxAud >= 7_000 && budgetSlug.includes("under-25k")) {
+      signals.push(
+        `${tierLabel} tier tops out around ${maxAud.toLocaleString("en-AU")} AUD on the heuristic—still sanity-check against the client's under-$25k USD band.`,
       );
     }
   } else if (

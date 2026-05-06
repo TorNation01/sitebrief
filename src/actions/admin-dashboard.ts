@@ -10,7 +10,7 @@ import { fetchStudioSubscription, fetchWebsiteIntakeWithClientById } from "@/lib
 import type { SiteBriefClient } from "@/lib/sitebrief/supabase-brand";
 import { isWorkflowStatus } from "@/lib/sitebrief/workflow-status";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { internalPriceEstimateV1Schema, type InternalPriceEstimateV1 } from "@/types/price-estimate";
+import { internalPriceEstimateV2Schema, type InternalPriceEstimateV2 } from "@/types/price-estimate";
 import { canUseInternalPricingEngine, parseSubscriptionTier } from "@/types/subscription";
 
 type StudioGuardResult =
@@ -131,7 +131,7 @@ export async function regenerateCursorPromptPackAction(
 
 export async function regenerateInternalPriceEstimateAction(
   intakeId: string,
-): Promise<{ error?: string; estimate?: InternalPriceEstimateV1 }> {
+): Promise<{ error?: string; estimate?: InternalPriceEstimateV2 }> {
   if (!intakeId) {
     return { error: "Submission reference missing." };
   }
@@ -161,7 +161,7 @@ export async function regenerateInternalPriceEstimateAction(
     }
 
     const estimate = buildInternalPriceEstimate(dossier);
-    const parsed = internalPriceEstimateV1Schema.safeParse(estimate);
+    const parsed = internalPriceEstimateV2Schema.safeParse(estimate);
     if (!parsed.success) {
       return { error: "Generated estimate failed validation — contact engineering." };
     }

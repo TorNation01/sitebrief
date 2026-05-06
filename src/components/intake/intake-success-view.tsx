@@ -21,31 +21,35 @@ export function IntakeSuccessView() {
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-4 py-16 sm:px-6 lg:px-8">
       <div>
-        <p className="text-xs font-semibold uppercase tracking-[0.32em] text-[var(--color-accent)]">
+        <p className="text-sm font-semibold uppercase tracking-[0.32em] text-[var(--color-accent)]">
           All set
         </p>
         <h1 className="mt-5 text-balance text-4xl font-semibold text-white sm:text-[2.85rem] sm:leading-tight">
-          Your Website Brief Has Been Submitted
+          Your website brief has been submitted
         </h1>
-        <p className="mt-4 max-w-2xl text-sm leading-relaxed text-white/72 sm:text-base">
-          Thanks — we’ve received your answers and will use them to prepare the best website build plan for your
-          project.
+        <p className="mt-4 max-w-2xl text-base leading-relaxed text-white/75 sm:text-lg">
+          Thanks — we have your answers. Next, our team reviews the brief, confirms scope, and when you are ready to
+          proceed we move into design and build milestones through to launch. Nothing billable starts until you agree a
+          separate written plan or contract.
         </p>
       </div>
 
       <Card tone="light">
-        <p className="text-sm font-semibold text-zinc-900">What happens now</p>
-        <ul className="mt-4 list-disc space-y-3 pl-5 text-sm leading-relaxed text-zinc-600">
-          <li>Your answers land with our team in a clear, structured brief—easy to review and act on.</li>
-          <li>Expect a thoughtful follow-up with any clarification questions or suggested next conversations.</li>
+        <p className="text-base font-semibold text-zinc-900">What happens now</p>
+        <ul className="mt-4 list-disc space-y-3 pl-5 text-base leading-relaxed text-zinc-600">
+          <li>Your answers are stored as a structured brief our team can review and turn into a concrete website plan.</li>
+          <li>Expect a follow-up with any clarification questions and, when appropriate, next steps toward design and build.</li>
+          <li>
+            When you approve scope, we schedule the build: pages, design, integrations, testing, then go-live and handover.
+          </li>
           <li>Need to change something meaningful? Reply on the acknowledgement message once it arrives.</li>
         </ul>
 
-        <div className="mt-6 rounded-xl bg-zinc-50 px-4 py-4 text-sm text-zinc-700 ring-1 ring-zinc-200">
+        <div className="mt-6 rounded-xl bg-zinc-50 px-4 py-4 text-base text-zinc-700 ring-1 ring-zinc-200">
           <p className="text-xs uppercase tracking-[0.24em] text-zinc-500">Confirmation token</p>
           <p className="mt-2 break-all font-mono text-sm text-zinc-900">{intakeRef ?? "Unavailable"}</p>
           {!intakeRef ? (
-            <p className="mt-3 text-xs text-red-700">
+            <p className="mt-3 text-sm text-red-700">
               The identifier was not returned in the URL. Check your history or contact the studio with
               your business email for manual lookup.
             </p>
@@ -53,26 +57,26 @@ export function IntakeSuccessView() {
         </div>
 
         <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
-          <ButtonLink href="/" variant="primary" className="w-full justify-center px-6 sm:w-auto">
+          <ButtonLink href="/" variant="primary" className="w-full justify-center px-6 text-base sm:w-auto">
             Return to overview
           </ButtonLink>
           <Link
             href="/admin"
-            className="w-full rounded-lg border border-zinc-200 px-4 py-2.5 text-center text-sm font-medium text-zinc-900 transition hover:border-zinc-300 hover:bg-zinc-50 sm:w-auto"
+            className="w-full rounded-lg border border-zinc-200 px-4 py-3 text-center text-base font-medium text-zinc-900 transition hover:border-zinc-300 hover:bg-zinc-50 sm:w-auto"
           >
             Staff sign-in →
           </Link>
         </div>
-        <p className="mt-6 text-xs leading-relaxed text-zinc-500">
-          The staff link is for Anakatech operators only (separate secure sign-in)—not this public briefing form.
+        <p className="mt-6 text-sm leading-relaxed text-zinc-500">
+          The staff link is for studio operators only (separate secure sign-in)—not this public briefing form.
         </p>
       </Card>
 
       <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] px-5 py-6 text-center sm:px-8">
-        <p className="text-sm leading-relaxed text-white/52">
+        <p className="text-base leading-relaxed text-white/55">
           Want your own version of this system for your business?
         </p>
-        <ButtonLink href="/white-label" variant="ghost" className="mx-auto mt-4 border border-white/[0.12] px-6 text-[13px] text-white/80">
+        <ButtonLink href="/white-label" variant="ghost" className="mx-auto mt-4 border border-white/[0.12] px-6 text-base text-white/80">
           Get Your Own
         </ButtonLink>
       </div>

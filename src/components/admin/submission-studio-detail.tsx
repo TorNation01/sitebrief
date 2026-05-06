@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { ClientMaterialsHandoff } from "@/components/admin/client-materials-handoff";
 import { CopyClientBriefButton } from "@/components/admin/copy-client-brief-button";
 import { ExportFullPackToolbar } from "@/components/admin/export-full-pack-toolbar";
 import { IntakeDecisionPanel } from "@/components/admin/intake-decision-panel";
@@ -10,6 +11,7 @@ import { SUBMISSION_FIELD_BLUEPRINT } from "@/components/admin/submission-detail
 import { SubmissionNoteComposer } from "@/components/admin/submission-note-composer";
 import { SubmissionStatusSwitcher } from "@/components/admin/submission-status-switcher";
 import { buildFullClientPackMarkdown, sanitizePackFileStem } from "@/lib/sitebrief/build-full-client-pack-md";
+import { parseNotificationEmailDestinations } from "@/lib/sitebrief/brand";
 import { coerceWorkflowStatus, isWorkflowStatus } from "@/lib/sitebrief/workflow-status";
 import type { AdminNoteRow, WebsiteIntakeWithClientRow } from "@/types/database";
 import {
@@ -64,6 +66,7 @@ export function SubmissionStudioDetail({ record, notes, subscriptionTier }: Subm
     notes,
   });
   const packFileStem = sanitizePackFileStem(record.clients.business_name, record.id);
+  const studioInbox = parseNotificationEmailDestinations()[0] ?? null;
 
   return (
     <div className="space-y-14 text-white">
@@ -134,6 +137,13 @@ export function SubmissionStudioDetail({ record, notes, subscriptionTier }: Subm
         businessName={record.clients.business_name}
         stored={record.internal_price_estimate}
         pricingEngineEnabled={pricingEngineEnabled}
+      />
+
+      <ClientMaterialsHandoff
+        intakeId={record.id}
+        businessName={record.clients.business_name}
+        clientEmail={record.clients.email}
+        studioInbox={studioInbox}
       />
 
       <section className="space-y-6">

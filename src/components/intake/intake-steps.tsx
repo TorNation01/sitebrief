@@ -10,6 +10,18 @@ import {
   textareaClassName,
 } from "@/components/intake/intake-field";
 import {
+  checklistDisplayLabel,
+  getBrandingStatusOptions,
+  getBudgetOptions,
+  getContentStatusOptions,
+  getDomainOptions,
+  getHostingOptions,
+  getPlatformOptions,
+  getPriorityOptions,
+  pickIntakeLine,
+} from "@/components/intake/intake-ux-copy";
+import { useIntakeUxMode } from "@/components/intake/intake-ux-mode";
+import {
   AI_OPTIONS,
   FEATURES_OPTIONS,
   INTEGRATIONS_OPTIONS,
@@ -218,8 +230,9 @@ function CheckboxList(props: {
     | "integrations_selected"
     | "ai_selected";
   options: readonly string[];
+  optionLabel?: (option: string) => string;
 }) {
-  const { label, hint, required, name, options } = props;
+  const { label, hint, required, name, options, optionLabel } = props;
   const { control } = useFormContext<IntakeFormValues>();
 
   return (
@@ -248,7 +261,9 @@ function CheckboxList(props: {
                     checked={value.includes(option)}
                     onChange={() => toggle(option)}
                   />
-                  <span className="text-sm text-zinc-800">{option}</span>
+                  <span className="text-sm text-zinc-800">
+                    {optionLabel ? optionLabel(option) : option}
+                  </span>
                 </label>
               ))}
             </div>
@@ -300,15 +315,21 @@ export function IntakeStepFields({ stepIndex }: { stepIndex: number }) {
     setValue,
     formState: { errors },
   } = useFormContext<IntakeFormValues>();
+  const { mode } = useIntakeUxMode();
+  const L = (technical: string, simple: string) => pickIntakeLine(mode, { technical, simple });
+  const optLbl = (o: string) => checklistDisplayLabel(mode, o);
 
   switch (stepIndex) {
     case 0:
       return (
         <div className="space-y-6">
           <FieldGroup
-            label="Primary contact name"
+            label={L("Primary contact name", "Your name")}
             htmlFor="contact_name"
-            hint="We'll match approvals and onboarding comms against this persona."
+            hint={L(
+              "We'll match approvals and onboarding comms against this persona.",
+              "The person we should address when we reply.",
+            )}
             required
             error={errors.contact_name}
           >
@@ -316,9 +337,12 @@ export function IntakeStepFields({ stepIndex }: { stepIndex: number }) {
           </FieldGroup>
 
           <FieldGroup
-            label="Work email"
+            label={L("Work email", "Email")}
             htmlFor="email"
-            hint="Routing for confirmations plus async follow-ups throughout scoping."
+            hint={L(
+              "Routing for confirmations plus async follow-ups throughout scoping.",
+              "We send your confirmation and follow-up questions here.",
+            )}
             required
             error={errors.email}
           >
@@ -326,18 +350,24 @@ export function IntakeStepFields({ stepIndex }: { stepIndex: number }) {
           </FieldGroup>
 
           <FieldGroup
-            label="Mobile or office phone"
+            label={L("Mobile or office phone", "Phone (optional)")}
             htmlFor="phone"
-            hint="Optional—helps us escalate nuanced decisions without scheduling friction."
+            hint={L(
+              "Optional—helps us escalate nuanced decisions without scheduling friction.",
+              "Optional—useful if we need a quick call.",
+            )}
             error={errors.phone}
           >
             <TextInput id="phone" type="tel" autoComplete="tel" {...register("phone")} />
           </FieldGroup>
 
           <FieldGroup
-            label="Existing website URL"
+            label={L("Existing website URL", "Current website (if you have one)")}
             htmlFor="website"
-            hint="Include https:// if something is publicly live—even if overdue for rework."
+            hint={L(
+              "Include https:// if something is publicly live—even if overdue for rework.",
+              "Paste the full link, even if the site is old or you plan to replace it.",
+            )}
             error={errors.website}
           >
             <TextInput
@@ -351,9 +381,12 @@ export function IntakeStepFields({ stepIndex }: { stepIndex: number }) {
       return (
         <div className="space-y-6">
           <FieldGroup
-            label="Business name"
+            label={L("Business name", "Business or organisation name")}
             htmlFor="business_name"
-            hint="Trading name surfaced to prospects—not only the legal corp string."
+            hint={L(
+              "Trading name surfaced to prospects—not only the legal corp string.",
+              "The name customers know you by (can differ from the legal company name).",
+            )}
             required
             error={errors.business_name}
           >
@@ -361,9 +394,12 @@ export function IntakeStepFields({ stepIndex }: { stepIndex: number }) {
           </FieldGroup>
 
           <FieldGroup
-            label="Elevator narrative"
+            label={L("Elevator narrative", "What you do—in a short paragraph")}
             htmlFor="business_summary"
-            hint="One tight paragraph capturing offer, wedge, geography, marquee proof points."
+            hint={L(
+              "One tight paragraph capturing offer, wedge, geography, marquee proof points.",
+              "In plain language: what you sell or deliver, who it is for, and what makes you different.",
+            )}
             error={errors.business_summary}
           >
             <textarea
@@ -375,16 +411,26 @@ export function IntakeStepFields({ stepIndex }: { stepIndex: number }) {
           </FieldGroup>
 
           <CheckboxList
-            label="Service lines we should consider in scope conversations"
-            hint="Select every materially revenue-bearing practice—we'll stitch nuance downstream."
+            label={L(
+              "Service lines we should consider in scope conversations",
+              "Services you want the website to reflect",
+            )}
+            hint={L(
+              "Select every materially revenue-bearing practice—we'll stitch nuance downstream.",
+              "Tick everything that applies. Use the box below for extra detail.",
+            )}
             name="services_selected"
             options={SERVICES_OPTIONS}
+            optionLabel={optLbl}
           />
 
           <FieldGroup
-            label="Services context & nuance"
+            label={L("Services context & nuance", "More about your services")}
             htmlFor="services_detail"
-            hint="Retainers vs. launches, SKU density, certifications, alliances—anything the checkboxes truncate."
+            hint={L(
+              "Retainers vs. launches, SKU density, certifications, alliances—anything the checkboxes truncate.",
+              "Anything the tick-boxes did not capture—packages, industries, certifications, etc.",
+            )}
             error={errors.services_detail}
           >
             <textarea
@@ -396,9 +442,12 @@ export function IntakeStepFields({ stepIndex }: { stepIndex: number }) {
           </FieldGroup>
 
           <FieldGroup
-            label="Ideal customer archetype"
+            label={L("Ideal customer archetype", "Your ideal customer")}
             htmlFor="ideal_customer"
-            hint="Your ideal customer means the type of person or business most likely to buy from you. Mention industries, company size, roles, or anything that helps describe them."
+            hint={L(
+              "Your ideal customer means the type of person or business most likely to buy from you. Mention industries, company size, roles, or anything that helps describe them.",
+              "Who is most likely to buy from you? Industries, company size, job roles—whatever helps us picture them.",
+            )}
             error={errors.ideal_customer}
           >
             <textarea
@@ -410,9 +459,12 @@ export function IntakeStepFields({ stepIndex }: { stepIndex: number }) {
           </FieldGroup>
 
           <FieldGroup
-            label="Pain the site needs to dissolve"
+            label={L("Pain the site needs to dissolve", "Problems you solve for customers")}
             htmlFor="problem_solved"
-            hint="Friction you hear in sales/support—missed differentiation, mistrust signals, onboarding drag."
+            hint={L(
+              "Friction you hear in sales/support—missed differentiation, mistrust signals, onboarding drag.",
+              "What frustrations or risks do customers have before they find you?",
+            )}
             error={errors.problem_solved}
           >
             <textarea
@@ -424,9 +476,12 @@ export function IntakeStepFields({ stepIndex }: { stepIndex: number }) {
           </FieldGroup>
 
           <FieldGroup
-            label="Sharpest distinctive value"
+            label={L("Sharpest distinctive value", "Why customers choose you")}
             htmlFor="unique_value"
-            hint="Why switch or stay—proof, methodology, telemetry, specialization."
+            hint={L(
+              "Why switch or stay—proof, methodology, telemetry, specialization.",
+              "What makes you the better choice—experience, speed, quality, price, niche focus, etc.?",
+            )}
             error={errors.unique_value}
           >
             <textarea
@@ -442,9 +497,12 @@ export function IntakeStepFields({ stepIndex }: { stepIndex: number }) {
       return (
         <div className="space-y-6">
           <FieldGroup
-            label="Primary outcome for the rebuilt site"
+            label={L("Primary outcome for the rebuilt site", "Main goal for the new website")}
             htmlFor="website_goal"
-            hint="Website goal means the main job your website needs to do—like generating leads, selling products, or building trust. Answer in your own words; we will translate it."
+            hint={L(
+              "Website goal means the main job your website needs to do—like generating leads, selling products, or building trust. Answer in your own words; we will translate it.",
+              "In your own words: what should the website help you achieve? (Leads, bookings, sales, trust, etc.)",
+            )}
             required
             error={errors.website_goal}
           >
@@ -457,9 +515,12 @@ export function IntakeStepFields({ stepIndex }: { stepIndex: number }) {
           </FieldGroup>
 
           <FieldGroup
-            label="Visitors should be able to…"
+            label={L("Visitors should be able to…", "What should visitors be able to do?")}
             htmlFor="desired_actions"
-            hint="Micro-conversions beyond contact forms—pricing requests, benchmarking tools, onboarding paths."
+            hint={L(
+              "Micro-conversions beyond contact forms—pricing requests, benchmarking tools, onboarding paths.",
+              "Beyond reading the site—book, buy, log in, download, apply, etc.",
+            )}
             error={errors.desired_actions}
           >
             <textarea
@@ -471,9 +532,12 @@ export function IntakeStepFields({ stepIndex }: { stepIndex: number }) {
           </FieldGroup>
 
           <FieldGroup
-            label="Measured success indicators"
+            label={L("Measured success indicators", "How will you measure success?")}
             htmlFor="success_metrics"
-            hint="SQL volume, funnel velocity, AOV/ACV deltas, churn, SLA reductions—anything with baselines appreciated."
+            hint={L(
+              "SQL volume, funnel velocity, AOV/ACV deltas, churn, SLA reductions—anything with baselines appreciated.",
+              "Numbers or signals you care about—more enquiries, faster bookings, lower bounce rate, etc.",
+            )}
             error={errors.success_metrics}
           >
             <textarea
@@ -489,9 +553,12 @@ export function IntakeStepFields({ stepIndex }: { stepIndex: number }) {
       return (
         <div className="space-y-6">
           <FieldGroup
-            label="Mission-critical screens & sections"
+            label={L("Mission-critical screens & sections", "Pages and main sections")}
             htmlFor="pages_needed"
-            hint="Think IA: marketing, logged-in dashboards, gated resources, internationalized hubs, etc."
+            hint={L(
+              "Think IA: marketing, logged-in dashboards, gated resources, internationalized hubs, etc.",
+              "List the pages or areas you need—Home, About, Services, Contact, Shop, Login, etc.",
+            )}
             error={errors.pages_needed}
           >
             <textarea
@@ -504,24 +571,34 @@ export function IntakeStepFields({ stepIndex }: { stepIndex: number }) {
 
           <SelectInput
             id="content_status"
-            label="Production readiness for words & visuals"
-            hint="Helps staffing writers, motion, and approvals."
+            label={L("Production readiness for words & visuals", "Where is your written content?")}
+            hint={L(
+              "Helps staffing writers, motion, and approvals.",
+              "Helps us plan writing and design support.",
+            )}
             fieldName="content_status"
-            options={CONTENT_STATUS_OPTIONS}
+            options={getContentStatusOptions(mode, CONTENT_STATUS_OPTIONS)}
             error={errors.content_status}
           />
 
           <CheckboxList
-            label="Flagship UX / CMS capabilities"
-            hint="Select every materially important surface area—the detail box captures specialty asks."
+            label={L("Flagship UX / CMS capabilities", "Important features")}
+            hint={L(
+              "Select every materially important surface area—the detail box captures specialty asks.",
+              "Tick what you need. Add unusual requests in the next box.",
+            )}
             name="features_selected"
             options={FEATURES_OPTIONS}
+            optionLabel={optLbl}
           />
 
           <FieldGroup
-            label="Functional depth & tooling"
+            label={L("Functional depth & tooling", "Extra feature detail")}
             htmlFor="features_detail"
-            hint="Edge flows, calculators, multilingual governance, SSO, experimentation stack, etc."
+            hint={L(
+              "Edge flows, calculators, multilingual governance, SSO, experimentation stack, etc.",
+              "Special flows, calculators, languages, logins, or anything not covered above.",
+            )}
             error={errors.features_detail}
           >
             <textarea
@@ -538,17 +615,23 @@ export function IntakeStepFields({ stepIndex }: { stepIndex: number }) {
         <div className="space-y-6">
           <SelectInput
             id="branding_status"
-            label="Brand system maturity"
-            hint="Guides how much discovery vs. expression work precedes UI."
+            label={L("Brand system maturity", "Brand materials")}
+            hint={L(
+              "Guides how much discovery vs. expression work precedes UI.",
+              "Tells us how much brand work happens before we design pages.",
+            )}
             fieldName="branding_status"
-            options={BRANDING_OPTIONS}
+            options={getBrandingStatusOptions(mode, BRANDING_OPTIONS)}
             error={errors.branding_status}
           />
 
           <FieldGroup
-            label="Voice + visual personality"
+            label={L("Voice + visual personality", "Look and tone")}
             htmlFor="brand_personality"
-            hint="Adjectives, cultural references, guardrails (never sound X, always feel Y)."
+            hint={L(
+              "Adjectives, cultural references, guardrails (never sound X, always feel Y).",
+              "Words that describe your style—modern, warm, bold—and anything to avoid.",
+            )}
             error={errors.brand_personality}
           >
             <textarea
@@ -560,9 +643,12 @@ export function IntakeStepFields({ stepIndex }: { stepIndex: number }) {
           </FieldGroup>
 
           <FieldGroup
-            label="Experiences you admire"
+            label={L("Experiences you admire", "Websites you like")}
             htmlFor="liked_websites"
-            hint="URLs plus a sentence each on what to emulate (motion, density, clarity of story)."
+            hint={L(
+              "URLs plus a sentence each on what to emulate (motion, density, clarity of story).",
+              "Paste links and say what you like about each (layout, colours, speed, tone).",
+            )}
             error={errors.liked_websites}
           >
             <textarea
@@ -574,9 +660,12 @@ export function IntakeStepFields({ stepIndex }: { stepIndex: number }) {
           </FieldGroup>
 
           <FieldGroup
-            label="Experiences to avoid"
+            label={L("Experiences to avoid", "Websites or styles to avoid")}
             htmlFor="disliked_websites"
-            hint="Competitor clichés, tacky patterns, compliance landmines—call them out."
+            hint={L(
+              "Competitor clichés, tacky patterns, compliance landmines—call them out.",
+              "Examples or patterns you do not want on your site.",
+            )}
             error={errors.disliked_websites}
           >
             <textarea
@@ -593,42 +682,61 @@ export function IntakeStepFields({ stepIndex }: { stepIndex: number }) {
         <div className="space-y-6">
           <SelectInput
             id="domain_status"
-            label="Domain posture"
-            hint="Impacts launch sequencing and SEO migrations."
+            label={L("Domain posture", "Your domain name")}
+            hint={L(
+              "Impacts launch sequencing and SEO migrations.",
+              "Whether you already own the web address and if it is ready to connect.",
+            )}
             fieldName="domain_status"
-            options={DOMAIN_OPTIONS}
+            options={getDomainOptions(mode, DOMAIN_OPTIONS)}
             error={errors.domain_status}
           />
 
           <SelectInput
             id="hosting_status"
-            label="Hosting & operations comfort"
-            hint="Helps us pair you with the right stack + support contracts."
+            label={L("Hosting & operations comfort", "Website hosting")}
+            hint={L(
+              "Helps us pair you with the right stack + support contracts.",
+              "Where the site should live and who should manage servers and updates.",
+            )}
             fieldName="hosting_status"
-            options={HOSTING_OPTIONS}
+            options={getHostingOptions(mode, HOSTING_OPTIONS)}
             error={errors.hosting_status}
           />
 
           <SelectInput
             id="platform_preference"
-            label="Platform bias (if any)"
-            hint="We can still challenge assumptions—this frames research depth."
+            label={L("Platform bias (if any)", "Preferred platform (optional)")}
+            hint={L(
+              "We can still challenge assumptions—this frames research depth.",
+              "If you have a preference (WordPress, Webflow, Shopify, etc.) say so—or choose not sure.",
+            )}
             fieldName="platform_preference"
-            options={PLATFORM_OPTIONS}
+            options={getPlatformOptions(mode, PLATFORM_OPTIONS)}
             error={errors.platform_preference}
           />
 
           <CheckboxList
-            label="Integrations we should architect for on day one"
-            hint="Integrations are tools your website may need to connect with—like Stripe, Calendly, Mailchimp, or a CRM. Select what applies, or choose “Not sure” for guidance later."
+            label={L(
+              "Integrations we should architect for on day one",
+              "Tools the site should connect to",
+            )}
+            hint={L(
+              "Integrations are tools your website may need to connect with—like Stripe, Calendly, Mailchimp, or a CRM. Select what applies, or choose “Not sure” for guidance later.",
+              "Tick tools you use or plan to use—payments, email, CRM, bookings. Choose “Not sure” if you want advice.",
+            )}
             name="integrations_selected"
             options={INTEGRATIONS_OPTIONS}
+            optionLabel={optLbl}
           />
 
           <FieldGroup
-            label="Integration nuance & auth models"
+            label={L("Integration nuance & auth models", "More on tools and logins")}
             htmlFor="integrations_detail"
-            hint="API ownership, sandboxes, compliance, rate limits, legacy SOAP—free-form detail welcome."
+            hint={L(
+              "API ownership, sandboxes, compliance, rate limits, legacy SOAP—free-form detail welcome.",
+              "Accounts, logins, who owns each tool, or anything unusual we should know.",
+            )}
             error={errors.integrations_detail}
           >
             <textarea
@@ -644,9 +752,12 @@ export function IntakeStepFields({ stepIndex }: { stepIndex: number }) {
       return (
         <div className="space-y-6">
           <FieldGroup
-            label="Tone of voice"
+            label={L("Tone of voice", "How you want to sound")}
             htmlFor="tone_of_voice"
-            hint="Editorial posture: confident vs. academic, playful vs. sober, inclusive language notes."
+            hint={L(
+              "Editorial posture: confident vs. academic, playful vs. sober, inclusive language notes.",
+              "Friendly, formal, bold, calm—whatever fits your brand.",
+            )}
             error={errors.tone_of_voice}
           >
             <textarea
@@ -658,9 +769,12 @@ export function IntakeStepFields({ stepIndex }: { stepIndex: number }) {
           </FieldGroup>
 
           <FieldGroup
-            label="Non-negotiable proof points / POV"
+            label={L("Non-negotiable proof points / POV", "Key messages")}
             htmlFor="key_messages"
-            hint="Claims that must survive legal review, mission statements, category POV."
+            hint={L(
+              "Claims that must survive legal review, mission statements, category POV.",
+              "Headlines or points that must appear—or legal lines we should not cross.",
+            )}
             error={errors.key_messages}
           >
             <textarea
@@ -672,9 +786,12 @@ export function IntakeStepFields({ stepIndex }: { stepIndex: number }) {
           </FieldGroup>
 
           <FieldGroup
-            label="Primary offers & CTAs"
+            label={L("Primary offers & CTAs", "Offers and calls to action")}
             htmlFor="offers"
-            hint="Book consult, request demo, download benchmark, apply for program—link to pricing philosophy if sensitive."
+            hint={L(
+              "Book consult, request demo, download benchmark, apply for program—link to pricing philosophy if sensitive.",
+              "What you want people to do next—book, call, buy, download—and any pricing sensitivity.",
+            )}
             error={errors.offers}
           >
             <textarea
@@ -686,9 +803,12 @@ export function IntakeStepFields({ stepIndex }: { stepIndex: number }) {
           </FieldGroup>
 
           <FieldGroup
-            label="Proof & social validation"
+            label={L("Proof & social validation", "Testimonials and proof")}
             htmlFor="testimonials"
-            hint="Named logos, quantified outcomes, analyst quotes, community love—note any NDAs."
+            hint={L(
+              "Named logos, quantified outcomes, analyst quotes, community love—note any NDAs.",
+              "Quotes, case studies, awards, logos—note if anything is confidential.",
+            )}
             error={errors.testimonials}
           >
             <textarea
@@ -704,9 +824,12 @@ export function IntakeStepFields({ stepIndex }: { stepIndex: number }) {
       return (
         <div className="space-y-6">
           <FieldGroup
-            label="Trust, risk, and compliance guardrails"
+            label={L("Trust, risk, and compliance guardrails", "Legal, privacy, and accessibility")}
             htmlFor="compliance_needs"
-            hint="Examples: HIPAA, FINRA, GDPR, accessibility (WCAG), industry regulators, or data residency. If you are unsure, choose “Insert Not sure” below or jot a quick note—we will follow up."
+            hint={L(
+              "Examples: HIPAA, FINRA, GDPR, accessibility (WCAG), industry regulators, or data residency. If you are unsure, use the button below or leave a short note—we will follow up.",
+              "Any health, finance, privacy, or accessibility rules we must follow. If unsure, tap the shortcut below.",
+            )}
             error={errors.compliance_needs}
           >
             <textarea
@@ -734,9 +857,12 @@ export function IntakeStepFields({ stepIndex }: { stepIndex: number }) {
       return (
         <div className="space-y-6">
           <FieldGroup
-            label="Product / web roadmap for the next 18–24 months"
+            label={L("Product / web roadmap for the next 18–24 months", "Plans for the next year or two")}
             htmlFor="future_expansion"
-            hint="New geos, languages, revenue lines, community programs—helps us avoid painting into corners."
+            hint={L(
+              "New geos, languages, revenue lines, community programs—helps us avoid painting into corners.",
+              "New products, regions, languages, or features so we leave room to grow.",
+            )}
             error={errors.future_expansion}
           >
             <textarea
@@ -748,16 +874,23 @@ export function IntakeStepFields({ stepIndex }: { stepIndex: number }) {
           </FieldGroup>
 
           <CheckboxList
-            label="AI-assisted experiences on the radar"
-            hint="We will not enable anything automatically—this shapes planning and guardrails. Select what interests you or choose “Not sure”."
+            label={L("AI-assisted experiences on the radar", "AI features you might want")}
+            hint={L(
+              "We will not enable anything automatically—this shapes planning and guardrails. Select what interests you or choose “Not sure”.",
+              "Nothing is switched on automatically—this only helps us plan. Choose “Not sure” if you want guidance.",
+            )}
             name="ai_selected"
             options={AI_OPTIONS}
+            optionLabel={optLbl}
           />
 
           <FieldGroup
-            label="AI nuance, constraints, or vendor preferences"
+            label={L("AI nuance, constraints, or vendor preferences", "More about AI (optional)")}
             htmlFor="ai_detail"
-            hint="Guardrails, opt-in policies, data retention, human-in-the-loop requirements."
+            hint={L(
+              "Guardrails, opt-in policies, data retention, human-in-the-loop requirements.",
+              "Privacy preferences, what AI should never do, or tools you prefer.",
+            )}
             error={errors.ai_detail}
           >
             <textarea
@@ -774,18 +907,24 @@ export function IntakeStepFields({ stepIndex }: { stepIndex: number }) {
         <div className="space-y-6">
           <SelectInput
             id="budget_range"
-            label="Budget allocation for this chapter"
-            hint="Ranges are directional—helps triage sequencing and partner fit."
+            label={L("Budget allocation for this chapter", "Rough project budget")}
+            hint={L(
+              "Ranges are directional—helps triage sequencing and partner fit.",
+              "Approximate range in USD—helps us suggest a realistic path.",
+            )}
             required
             fieldName="budget_range"
-            options={BUDGET_OPTIONS}
+            options={getBudgetOptions(mode, BUDGET_OPTIONS)}
             error={errors.budget_range}
           />
 
           <FieldGroup
-            label="Desired launch window"
+            label={L("Desired launch window", "Target launch date (optional)")}
             htmlFor="deadline"
-            hint="Optional—choose a stakeholder-facing milestone or drop context in final notes instead."
+            hint={L(
+              "Optional—choose a stakeholder-facing milestone or drop context in final notes instead.",
+              "Pick a date if you have one—or explain timing in the final notes step.",
+            )}
             error={errors.deadline}
           >
             <TextInput id="deadline" type="date" {...register("deadline")} />
@@ -793,9 +932,13 @@ export function IntakeStepFields({ stepIndex }: { stepIndex: number }) {
 
           <SelectInput
             id="priority_level"
-            label="Delivery tempo vs. depth"
+            label={L("Delivery tempo vs. depth", "Timeline priority")}
+            hint={L(
+              "Helps us balance polish against calendar pressure.",
+              "Tell us if the date is flexible or fixed.",
+            )}
             fieldName="priority_level"
-            options={PRIORITY_OPTIONS}
+            options={getPriorityOptions(mode, PRIORITY_OPTIONS)}
             error={errors.priority_level}
           />
         </div>
@@ -804,9 +947,12 @@ export function IntakeStepFields({ stepIndex }: { stepIndex: number }) {
       return (
         <div className="space-y-6">
           <FieldGroup
-            label="Executive summary / final context"
+            label={L("Executive summary / final context", "Anything else we should know")}
             htmlFor="extra_notes"
-            hint="Links to briefs decks, stakeholder politics, blackout dates, procurement hurdles—anything you want leadership to absorb."
+            hint={L(
+              "Links to briefs decks, stakeholder politics, blackout dates, procurement hurdles—anything you want leadership to absorb.",
+              "Links, blackout dates, stakeholders, or context that did not fit elsewhere.",
+            )}
             error={errors.extra_notes}
           >
             <textarea

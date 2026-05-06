@@ -1,5 +1,5 @@
 import { SUBMISSION_FIELD_BLUEPRINT } from "@/components/admin/submission-detail-matrix";
-import { formatInternalPriceEstimateForCopy } from "@/lib/sitebrief/build-internal-price-estimate";
+import { formatStoredInternalPriceEstimateForCopy } from "@/lib/sitebrief/build-internal-price-estimate";
 import { getPublicBrand } from "@/lib/sitebrief/brand";
 import { coerceWorkflowStatus } from "@/lib/sitebrief/workflow-status";
 import type { AdminNoteRow, ClientRow, WebsiteIntakeRow } from "@/types/database";
@@ -68,7 +68,7 @@ export function buildFullClientPackMarkdown({ client, intake, notes }: FullClien
 
   chunks.push(`## Internal price estimate`, ``);
   if (estimate) {
-    const block = formatInternalPriceEstimateForCopy(estimate, client.business_name)
+    const block = formatStoredInternalPriceEstimateForCopy(estimate, client.business_name)
       .replace(/^#[^\n]+\n+/, "")
       .trimStart();
     chunks.push(block, ``);

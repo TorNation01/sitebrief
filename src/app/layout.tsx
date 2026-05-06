@@ -26,7 +26,7 @@ export const metadata: Metadata = {
       ? new URL(process.env.NEXT_PUBLIC_SITE_URL)
       : undefined,
   title: {
-    default: `${brand.appName} — Website briefing · ${brand.studioDisplayName}`,
+    default: `${brand.appName} — Line up your next website build · ${brand.studioDisplayName}`,
     template: `%s · ${brand.appName}`,
   },
   description: brand.metaDescription,
@@ -41,7 +41,7 @@ export const metadata: Metadata = {
         ? process.env.NEXT_PUBLIC_SITE_URL
         : undefined,
     siteName: brand.appName,
-    title: `${brand.appName} — Website briefing · ${brand.studioDisplayName}`,
+    title: `${brand.appName} — Your build-ready website brief`,
     description: brand.metaDescription,
   },
   twitter: {

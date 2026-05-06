@@ -1,6 +1,6 @@
 /** Generated-style Supabase typings for SiteBrief tables. */
 
-import type { InternalPriceEstimateV1 } from "@/types/price-estimate";
+import type { StoredInternalPriceEstimate } from "@/types/price-estimate";
 
 export type Database = {
   public: {
@@ -70,7 +70,7 @@ export type Database = {
           priority_level: string | null;
           extra_notes: string | null;
           generated_prompt_pack: string | null;
-          internal_price_estimate: InternalPriceEstimateV1 | null;
+          internal_price_estimate: StoredInternalPriceEstimate | null;
           status: string;
           created_at: string;
           updated_at: string;
@@ -109,7 +109,7 @@ export type Database = {
           priority_level?: string | null;
           extra_notes?: string | null;
           generated_prompt_pack?: string | null;
-          internal_price_estimate?: InternalPriceEstimateV1 | null;
+          internal_price_estimate?: StoredInternalPriceEstimate | null;
           status?: string;
           created_at?: string;
           updated_at?: string;
@@ -148,7 +148,7 @@ export type Database = {
           priority_level?: string | null;
           extra_notes?: string | null;
           generated_prompt_pack?: string | null;
-          internal_price_estimate?: InternalPriceEstimateV1 | null;
+          internal_price_estimate?: StoredInternalPriceEstimate | null;
           status?: string;
           created_at?: string;
           updated_at?: string;

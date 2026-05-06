@@ -7,9 +7,9 @@ export const BRAND_DEFAULTS = {
   /** Parent studio (sidebar + provenance lines). */
   studioDisplayName: "Anakatech",
   taglineFooter:
-    "Standalone website briefing from Anakatech—premium, calm, and fast for clients and delivery teams alike.",
+    "A guided website brief from Anakatech—capture goals, scope, and preferences in one calm flow for your team and ours.",
   metaDescriptionShort:
-    "SiteBrief is a standalone Anakatech technology: an elegant guided website brief that feels premium and moves fast—goals, scope, and preferences in one place.",
+    "Turn your website idea into a clear build plan in minutes: one smart brief, zero jargon overload, and a faster path from goals to launch. Tap through—your next site deserves a head start.",
   /** Filename slug for exports (`{slug}-business-intake-id.md`). */
   exportSlug: "sitebrief",
   accentHex: "#c9a962",

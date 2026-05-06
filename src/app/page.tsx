@@ -11,12 +11,24 @@ import { LandingAfterSubmit } from "@/components/landing/landing-after-submit";
 import { LandingFinalCta } from "@/components/landing/landing-final-cta";
 import { getPublicBrand } from "@/lib/sitebrief/brand";
 
+const brand = getPublicBrand();
+
 export const metadata: Metadata = {
   alternates: {
     canonical: "/",
   },
-  title: "Premium website briefing for your next build",
-  description: getPublicBrand().metaDescription,
+  title: "Shape your next website in one focused brief",
+  description: brand.metaDescription,
+  openGraph: {
+    title: `Stop guessing scope—${brand.appName} lines up your build`,
+    description: brand.metaDescription,
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `${brand.appName} · ${brand.studioDisplayName}`,
+    description: brand.metaDescription,
+  },
 };
 
 export default function HomePage() {

@@ -3,6 +3,18 @@
 import { useFormContext } from "react-hook-form";
 
 import {
+  checklistDisplayLabel,
+  getBrandingStatusOptions,
+  getBudgetOptions,
+  getContentStatusOptions,
+  getDomainOptions,
+  getHostingOptions,
+  getIntakeStepHeader,
+  getPlatformOptions,
+  getPriorityOptions,
+} from "@/components/intake/intake-ux-copy";
+import { useIntakeUxMode, type IntakeUxMode } from "@/components/intake/intake-ux-mode";
+import {
   BRANDING_OPTIONS,
   BUDGET_OPTIONS,
   CONTENT_STATUS_OPTIONS,
@@ -19,15 +31,26 @@ import {
 } from "@/components/intake/intake-schema";
 import { Button } from "@/components/ui/button";
 
-const SELECT_LOOKUP: Partial<Record<keyof IntakeFormValues, readonly IntakeSelectChoice[]>> = {
-  content_status: CONTENT_STATUS_OPTIONS,
-  branding_status: BRANDING_OPTIONS,
-  domain_status: DOMAIN_OPTIONS,
-  hosting_status: HOSTING_OPTIONS,
-  platform_preference: PLATFORM_OPTIONS,
-  budget_range: BUDGET_OPTIONS,
-  priority_level: PRIORITY_OPTIONS,
-};
+function selectOptionsFor(mode: IntakeUxMode, key: keyof IntakeFormValues) {
+  switch (key) {
+    case "content_status":
+      return getContentStatusOptions(mode, CONTENT_STATUS_OPTIONS);
+    case "branding_status":
+      return getBrandingStatusOptions(mode, BRANDING_OPTIONS);
+    case "domain_status":
+      return getDomainOptions(mode, DOMAIN_OPTIONS);
+    case "hosting_status":
+      return getHostingOptions(mode, HOSTING_OPTIONS);
+    case "platform_preference":
+      return getPlatformOptions(mode, PLATFORM_OPTIONS);
+    case "budget_range":
+      return getBudgetOptions(mode, BUDGET_OPTIONS);
+    case "priority_level":
+      return getPriorityOptions(mode, PRIORITY_OPTIONS);
+    default:
+      return undefined;
+  }
+}
 
 function labelFromOptions(options: readonly IntakeSelectChoice[], value: string): string | null {
   const entry = options.find((item) => item.value === value);
@@ -40,26 +63,30 @@ function humanize(key: keyof IntakeFormValues): string {
     .replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
-function formatScalar(key: keyof IntakeFormValues, value: string): string | null {
+function formatScalar(key: keyof IntakeFormValues, value: string, mode: IntakeUxMode): string | null {
   const trimmed = value.trim();
   if (!trimmed.length) {
     return null;
   }
-  const options = SELECT_LOOKUP[key];
+  const options = selectOptionsFor(mode, key);
   if (options) {
     return labelFromOptions(options, trimmed) ?? trimmed;
   }
   return trimmed;
 }
 
-function formatList(values: readonly string[]): string | null {
+function formatList(values: readonly string[], mode: IntakeUxMode): string | null {
   const cleaned = values.map((entry) => entry.trim()).filter(Boolean);
-  return cleaned.length ? cleaned.join(", ") : null;
+  if (!cleaned.length) {
+    return null;
+  }
+  return cleaned.map((entry) => checklistDisplayLabel(mode, entry)).join(", ");
 }
 
 export function IntakeReviewSummary(props: { onEditStep: (stepIndex: number) => void }) {
   const { onEditStep } = props;
   const { watch } = useFormContext<IntakeFormValuesWithHoneypot>();
+  const { mode } = useIntakeUxMode();
 
   const values = watch();
 
@@ -67,7 +94,7 @@ export function IntakeReviewSummary(props: { onEditStep: (stepIndex: number) => 
     <div className="space-y-8">
       <div>
         <h2 className="text-xl font-semibold text-zinc-900 sm:text-2xl">Review your answers</h2>
-        <p className="mt-2 text-sm leading-relaxed text-zinc-600">
+        <p className="mt-2 text-base leading-relaxed text-zinc-600">
           Take a minute to skim each section. You can jump back to any step to tweak details before submitting.
         </p>
       </div>
@@ -75,19 +102,20 @@ export function IntakeReviewSummary(props: { onEditStep: (stepIndex: number) => 
       <div className="space-y-8">
         {INTAKE_STEPS.map((definition, stepIndex) => {
           const fields = definition.fields;
+          const sectionTitle = getIntakeStepHeader(mode, stepIndex).title;
 
           const rows = fields
             .map((fieldKey) => {
               const raw = values[fieldKey];
               if (Array.isArray(raw)) {
-                const text = formatList(raw as string[]);
+                const text = formatList(raw as string[], mode);
                 if (!text) {
                   return null;
                 }
                 return { key: fieldKey, text };
               }
               if (typeof raw === "string") {
-                const text = formatScalar(fieldKey, raw);
+                const text = formatScalar(fieldKey, raw, mode);
                 if (!text) {
                   return null;
                 }
@@ -108,8 +136,8 @@ export function IntakeReviewSummary(props: { onEditStep: (stepIndex: number) => 
             >
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
                 <div>
-                  <p className="text-base font-semibold text-zinc-900">{definition.title}</p>
-                  <div className="mt-4 space-y-3 text-sm leading-relaxed text-zinc-700">
+                  <p className="text-lg font-semibold text-zinc-900">{sectionTitle}</p>
+                  <div className="mt-4 space-y-3 text-base leading-relaxed text-zinc-700">
                     {rows.map((row) => (
                       <div key={row.key} className="space-y-1">
                         <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">

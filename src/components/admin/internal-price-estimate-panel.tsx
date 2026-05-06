@@ -8,9 +8,9 @@ import { regenerateInternalPriceEstimateAction } from "@/actions/admin-dashboard
 import { Button } from "@/components/ui/button";
 import {
   formatEstimateAud,
-  formatInternalPriceEstimateForCopy,
+  formatStoredInternalPriceEstimateForCopy,
 } from "@/lib/sitebrief/build-internal-price-estimate";
-import { parseStoredPriceEstimate } from "@/types/price-estimate";
+import { isInternalPriceEstimateV2, parseStoredPriceEstimate } from "@/types/price-estimate";
 
 type InternalPriceEstimatePanelProps = {
   intakeId: string;
@@ -19,6 +19,14 @@ type InternalPriceEstimatePanelProps = {
   stored: unknown;
   pricingEngineEnabled: boolean;
 };
+
+const FACTOR_ORDER = [
+  { key: "pages" as const, title: "Pages" },
+  { key: "features" as const, title: "Features" },
+  { key: "content" as const, title: "Content" },
+  { key: "branding" as const, title: "Branding" },
+  { key: "integrations" as const, title: "Integrations" },
+];
 
 export function InternalPriceEstimatePanel({
   intakeId,
@@ -55,7 +63,7 @@ export function InternalPriceEstimatePanel({
     if (!estimate) {
       return;
     }
-    const text = formatInternalPriceEstimateForCopy(estimate, businessName);
+    const text = formatStoredInternalPriceEstimateForCopy(estimate, businessName);
     try {
       await navigator.clipboard.writeText(text);
       setCopyMessage("Copied to clipboard.");
@@ -76,10 +84,10 @@ export function InternalPriceEstimatePanel({
               Internal only
             </span>
           </div>
-          <h2 className="text-2xl font-semibold text-white">Heuristic AUD build envelope</h2>
+          <h2 className="text-2xl font-semibold text-white">Tiered AUD estimate (grading model)</h2>
           <p className="max-w-xl text-sm leading-relaxed text-white/70">
-            Studio-only sizing from intake text — never expose to applicants. Uses keyword + page-count heuristics;
-            sanity-check live before quoting.
+            Studio-only: five factors (1–3 points each) map to Starter / Business / Professional / Custom. Never expose
+            to applicants. Regenerate after intake edits.
           </p>
           {!pricingEngineEnabled ? (
             <p className="max-w-xl text-sm leading-relaxed text-amber-200/90">
@@ -129,8 +137,75 @@ export function InternalPriceEstimatePanel({
             ? "No estimate stored yet — generate once to baseline this submission."
             : "Upgrade to Professional to generate heuristic studio estimates."}
         </p>
+      ) : isInternalPriceEstimateV2(estimate) ? (
+        <div className="mt-10 space-y-8">
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            <Metric label="Tier" value={estimate.tier.name} emphasize />
+            <Metric
+              label="Total score"
+              value={`${estimate.totalScore} / 15 (band ${estimate.tier.scoreRange.min}–${estimate.tier.scoreRange.max})`}
+            />
+            <Metric
+              label="Price range (AUD)"
+              value={`${formatEstimateAud(estimate.tier.priceMinAud)} – ${formatEstimateAud(estimate.tier.priceMaxAud)}${
+                estimate.tier.priceMaxIsOpenEnded ? "+" : ""
+              }`}
+            />
+            <Metric label="Delivery estimate" value={estimate.tier.deliveryEstimate} />
+          </div>
+
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-white/50">
+              Per-factor breakdown (1–3 each)
+            </p>
+            <ul className="mt-4 space-y-3 text-sm leading-relaxed text-white/80">
+              {FACTOR_ORDER.map(({ key, title }) => {
+                const row = estimate.scoreBreakdown[key];
+                return (
+                  <li
+                    key={key}
+                    className="rounded-2xl border border-white/[0.06] bg-white/[0.02] px-4 py-4"
+                  >
+                    <div className="flex flex-wrap items-baseline justify-between gap-2">
+                      <p className="font-semibold text-white">
+                        {title}{" "}
+                        <span className="font-mono text-amber-200/90">({row.points} pt)</span>
+                      </p>
+                      <p className="text-xs uppercase tracking-wide text-white/45">{row.label}</p>
+                    </div>
+                    <p className="mt-2 text-white/72">{row.rationale}</p>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+
+          <div className="rounded-2xl border border-rose-500/25 bg-rose-950/20 p-6">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-rose-200/85">
+              Red flags / discovery prompts
+            </p>
+            {estimate.redFlags.length === 0 ? (
+              <p className="mt-4 text-sm text-white/72">Nothing auto-flagged — still validate in-call.</p>
+            ) : (
+              <ul className="mt-4 list-disc space-y-2 pl-5 text-sm text-rose-50/92">
+                {estimate.redFlags.map((flag) => (
+                  <li key={flag}>{flag}</li>
+                ))}
+              </ul>
+            )}
+          </div>
+
+          <p className="text-[11px] text-white/45">
+            Snapshot generated {new Date(estimate.generatedAt).toLocaleString("en-AU")} · {estimate.currency} · model
+            v{estimate.version}
+          </p>
+        </div>
       ) : (
         <div className="mt-10 space-y-8">
+          <p className="rounded-2xl border border-amber-400/30 bg-amber-950/20 px-4 py-3 text-sm text-amber-100/90">
+            This submission uses a <strong>legacy estimate (v1)</strong>. Regenerate to switch to the current tiered
+            grading model (v2).
+          </p>
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
             <Metric label="Suggested tier" value={estimate.suggestedTier} />
             <Metric
@@ -198,7 +273,8 @@ export function InternalPriceEstimatePanel({
           </div>
 
           <p className="text-[11px] text-white/45">
-            Snapshot generated {new Date(estimate.generatedAt).toLocaleString("en-AU")} · {estimate.currency}
+            Snapshot generated {new Date(estimate.generatedAt).toLocaleString("en-AU")} · {estimate.currency} · legacy
+            v{estimate.version}
           </p>
         </div>
       )}

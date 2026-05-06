@@ -20,7 +20,7 @@ export function FieldGroup({
   return (
     <div className="space-y-1.5">
       <label htmlFor={htmlFor} className="block">
-        <span className="text-sm font-medium text-zinc-900">
+        <span className="text-base font-medium text-zinc-900">
           {label}
           {required ? (
             <span className="ml-1 text-[var(--color-accent)]" aria-hidden>
@@ -29,7 +29,7 @@ export function FieldGroup({
           ) : null}
         </span>
         {hint ? (
-          <span className="mt-1 block text-xs leading-relaxed text-zinc-500">
+          <span className="mt-1 block text-sm leading-relaxed text-zinc-500">
             {hint}
           </span>
         ) : null}
@@ -45,7 +45,7 @@ export function FieldGroup({
 }
 
 export const inputClassName =
-  "mt-1 w-full rounded-lg border border-zinc-200 bg-white px-3 py-2.5 text-sm text-zinc-900 shadow-sm placeholder:text-zinc-400 outline-none ring-1 ring-transparent transition-[box-shadow,border-color] hover:border-[var(--color-accent)] hover:shadow-md focus-visible:border-transparent focus-visible:ring-[var(--color-accent)]";
+  "mt-1 w-full rounded-lg border border-zinc-200 bg-white px-3 py-3 text-base text-zinc-900 shadow-sm placeholder:text-zinc-400 outline-none ring-1 ring-transparent transition-[box-shadow,border-color] hover:border-[var(--color-accent)] hover:shadow-md focus-visible:border-transparent focus-visible:ring-[var(--color-accent)]";
 
 export const selectClassName = inputClassName;
 
