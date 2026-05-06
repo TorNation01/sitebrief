@@ -99,9 +99,8 @@ function IntakeWizardInner({ supabaseConfigured }: IntakeWizardProps) {
 
   const stepProgressPct =
     phase === "review" ? 100 : Math.round(((step + 1) / STEP_COUNT) * 100);
-  const stepHeaderForSticky = getIntakeStepHeader(mode, step);
-  const stickyStepTitle =
-    phase === "review" ? "Review answers" : stepHeaderForSticky.title;
+  const stepHeader = getIntakeStepHeader(mode, step);
+  const stickyStepTitle = phase === "review" ? "Review answers" : stepHeader.title;
   const showStickyNav = phase === "steps" || phase === "review";
 
   const validateCurrentStep = useCallback(async () => {
