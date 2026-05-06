@@ -898,7 +898,6 @@ export function IntakeStepFields({ stepIndex }: { stepIndex: number }) {
               "Ranges are directional—helps triage sequencing and partner fit.",
               "Approximate range in AUD—helps us suggest a realistic path.",
             )}
-            required
             fieldName="budget_range"
             options={getBudgetOptions(mode, BUDGET_OPTIONS)}
             error={errors.budget_range}

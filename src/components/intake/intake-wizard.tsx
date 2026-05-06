@@ -14,6 +14,7 @@ import { IntakeUxModeProvider, useIntakeUxMode } from "@/components/intake/intak
 import { IntakeUxModeToggle } from "@/components/intake/intake-ux-mode-toggle";
 import {
   applyZodIssuesToForm,
+  formatIntakeValidationIssues,
   intakeFormHoneypotWasTriggered,
   intakeFormSchemaWithHoneypot,
   intakeStepSchemas,
@@ -21,6 +22,7 @@ import {
   INTAKE_STEPS,
   sanitizeIntakeSelections,
   type IntakeFormValuesWithHoneypot,
+  type IntakeValidationIssueRow,
 } from "@/components/intake/intake-schema";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -74,6 +76,7 @@ function IntakeWizardInner({ supabaseConfigured }: IntakeWizardProps) {
   const [phase, setPhase] = useState<IntakePhase>("intro");
   const [step, setStep] = useState(0);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [validationIssues, setValidationIssues] = useState<IntakeValidationIssueRow[]>([]);
   const [isSubmitting, setSubmitting] = useState(false);
 
   const methods = useForm<IntakeFormValuesWithHoneypot>({
@@ -122,6 +125,7 @@ function IntakeWizardInner({ supabaseConfigured }: IntakeWizardProps) {
 
   const handleNext = useCallback(async () => {
     setSubmitError(null);
+    setValidationIssues([]);
     const ok = await validateCurrentStep();
     if (!ok) {
       return;
@@ -132,23 +136,14 @@ function IntakeWizardInner({ supabaseConfigured }: IntakeWizardProps) {
 
   const handleBack = useCallback(() => {
     setSubmitError(null);
+    setValidationIssues([]);
     setStep((value) => Math.max(value - 1, 0));
     scrollToTopSmooth();
   }, []);
 
-  const jumpToIssueStep = useCallback((field: keyof IntakeFormValuesWithHoneypot) => {
-    const index = INTAKE_STEPS.findIndex((definition) =>
-      (definition.fields as readonly string[]).includes(field),
-    );
-
-    if (index >= 0) {
-      setPhase("steps");
-      setStep(index);
-    }
-  }, []);
-
   const handleGoToReview = useCallback(async () => {
     setSubmitError(null);
+    setValidationIssues([]);
     const ok = await validateCurrentStep();
     if (!ok) {
       return;
@@ -157,24 +152,33 @@ function IntakeWizardInner({ supabaseConfigured }: IntakeWizardProps) {
     scrollToTopSmooth();
   }, [validateCurrentStep]);
 
+  const scrollValidationBannerIntoView = useCallback(() => {
+    requestAnimationFrame(() => {
+      document.getElementById("intake-validation-banner")?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    });
+  }, []);
+
   const handleFinalSubmit = useCallback(async () => {
     setSubmitError(null);
+    setValidationIssues([]);
     applySanitizedSelections(methods);
 
     const parsed = intakeFormSchemaWithHoneypot.safeParse(methods.getValues());
     if (!parsed.success) {
+      methods.clearErrors();
       const suspicious = intakeFormHoneypotWasTriggered(parsed.error.issues);
       if (suspicious) {
         setSubmitError(
-          "Automatic form fillers blocked this submission. Disable extensions for this site or clear optional hidden fields.",
+          "This submission was blocked because optional security fields were filled in (often by a password manager or browser extension). Clear those fields or try again in a private window.",
         );
       } else {
         applyZodIssuesToForm(methods, parsed.error);
-        const firstIssue = parsed.error.issues[0]?.path?.[0];
-        if (typeof firstIssue === "string") {
-          jumpToIssueStep(firstIssue as keyof IntakeFormValuesWithHoneypot);
-        }
-        setPhase("steps");
+        setValidationIssues(formatIntakeValidationIssues(parsed.error));
+        setPhase("review");
+        scrollValidationBannerIntoView();
       }
       scrollToTopSmooth();
       return;
@@ -192,11 +196,22 @@ function IntakeWizardInner({ supabaseConfigured }: IntakeWizardProps) {
     try {
       const outcome = await submitWebsiteIntakeAction(parsed.data);
       if (!outcome.ok) {
+        const replay = intakeFormSchemaWithHoneypot.safeParse(methods.getValues());
+        if (!replay.success && !intakeFormHoneypotWasTriggered(replay.error.issues)) {
+          methods.clearErrors();
+          applyZodIssuesToForm(methods, replay.error);
+          setValidationIssues(formatIntakeValidationIssues(replay.error));
+        } else {
+          setValidationIssues([]);
+        }
         setSubmitError(outcome.error);
+        setPhase("review");
+        scrollValidationBannerIntoView();
         scrollToTopSmooth();
         return;
       }
 
+      setValidationIssues([]);
       trackSiteVercelEvent(SITE_VERCEL_EVENTS.intakeCompleted);
       router.push(`/intake/success?ref=${encodeURIComponent(outcome.intakeId)}`);
     } catch (error) {
@@ -205,7 +220,7 @@ function IntakeWizardInner({ supabaseConfigured }: IntakeWizardProps) {
     } finally {
       setSubmitting(false);
     }
-  }, [jumpToIssueStep, methods, router, supabaseConfigured]);
+  }, [methods, router, scrollValidationBannerIntoView, supabaseConfigured]);
 
   const handleStickyPrimary = useCallback(async () => {
     if (phase === "review") {
@@ -221,6 +236,7 @@ function IntakeWizardInner({ supabaseConfigured }: IntakeWizardProps) {
 
   const handleStickyBack = useCallback(() => {
     setSubmitError(null);
+    setValidationIssues([]);
     if (phase === "review") {
       setPhase("steps");
       setStep(STEP_COUNT - 1);
@@ -232,6 +248,7 @@ function IntakeWizardInner({ supabaseConfigured }: IntakeWizardProps) {
 
   const handleEditFromReview = useCallback((targetStep: number) => {
     setSubmitError(null);
+    setValidationIssues([]);
     setPhase("steps");
     setStep(targetStep);
     scrollToTopSmooth();
@@ -269,7 +286,7 @@ function IntakeWizardInner({ supabaseConfigured }: IntakeWizardProps) {
           <input
             id="sitebrief_hp_department_role"
             tabIndex={-1}
-            autoComplete="organization-title"
+            autoComplete="off"
             {...methods.register("hp_department_role")}
           />
         </div>
@@ -341,7 +358,18 @@ function IntakeWizardInner({ supabaseConfigured }: IntakeWizardProps) {
 
         {phase === "review" ? (
           <Card tone="light" className="space-y-8">
-            <IntakeReviewSummary onEditStep={handleEditFromReview} />
+            <IntakeReviewSummary
+              onEditStep={handleEditFromReview}
+              validationIssues={validationIssues}
+              onJumpToField={(row) => {
+                if (row.stepIndex == null) {
+                  return;
+                }
+                setPhase("steps");
+                setStep(row.stepIndex);
+                scrollToTopSmooth();
+              }}
+            />
           </Card>
         ) : null}
 

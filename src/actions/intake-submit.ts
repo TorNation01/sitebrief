@@ -56,19 +56,23 @@ export async function submitWebsiteIntakeAction(
 
   const parsed = intakeFormSchemaWithHoneypot.safeParse(payload);
   if (!parsed.success) {
+    console.error("[sitebrief] intake submit Zod (initial parse)", parsed.error.flatten());
+    console.error("[sitebrief] intake submit Zod issues (initial)", parsed.error.issues);
     if (intakeFormHoneypotWasTriggered(parsed.error.issues)) {
       return { ok: false, error: SPAM_RESPONSE };
     }
     return {
       ok: false,
       error:
-        "Some answers are invalid, too long, or incomplete. Review the form and correct any highlighted fields.",
+        "Some answers are invalid, too long, or incomplete. See the list at the top of the review step (or scroll up) for details.",
     };
   }
 
   const sanitized = sanitizeIntakeSelections(parsed.data);
   const rechecked = intakeFormSchemaWithHoneypot.safeParse(sanitized);
   if (!rechecked.success) {
+    console.error("[sitebrief] intake submit Zod (post-sanitize)", rechecked.error.flatten());
+    console.error("[sitebrief] intake submit Zod issues (post-sanitize)", rechecked.error.issues);
     if (intakeFormHoneypotWasTriggered(rechecked.error.issues)) {
       return { ok: false, error: SPAM_RESPONSE };
     }

@@ -28,6 +28,7 @@ import {
   INTAKE_STEPS,
   type IntakeFormValues,
   type IntakeFormValuesWithHoneypot,
+  type IntakeValidationIssueRow,
 } from "@/components/intake/intake-schema";
 import { Button } from "@/components/ui/button";
 
@@ -83,8 +84,12 @@ function formatList(values: readonly string[], mode: IntakeUxMode): string | nul
   return cleaned.map((entry) => checklistDisplayLabel(mode, entry)).join(", ");
 }
 
-export function IntakeReviewSummary(props: { onEditStep: (stepIndex: number) => void }) {
-  const { onEditStep } = props;
+export function IntakeReviewSummary(props: {
+  onEditStep: (stepIndex: number) => void;
+  validationIssues?: readonly IntakeValidationIssueRow[];
+  onJumpToField?: (row: IntakeValidationIssueRow) => void;
+}) {
+  const { onEditStep, validationIssues = [], onJumpToField } = props;
   const { watch } = useFormContext<IntakeFormValuesWithHoneypot>();
   const { mode } = useIntakeUxMode();
 
@@ -92,6 +97,36 @@ export function IntakeReviewSummary(props: { onEditStep: (stepIndex: number) => 
 
   return (
     <div className="space-y-8">
+      {validationIssues.length > 0 ? (
+        <div
+          id="intake-validation-banner"
+          className="rounded-2xl border border-amber-500/50 bg-amber-50 px-4 py-4 sm:px-5"
+          role="alert"
+          aria-live="polite"
+        >
+          <p className="text-sm font-semibold text-amber-950">Please fix the following before submitting:</p>
+          <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-amber-950/90">
+            {validationIssues.map((row) => (
+              <li key={`${row.fieldKey}-${row.message}`}>
+                <span className="font-semibold">{row.fieldLabel}:</span> {row.message}
+                {onJumpToField && row.stepIndex != null ? (
+                  <>
+                    {" "}
+                    <button
+                      type="button"
+                      className="font-semibold text-amber-900 underline decoration-amber-700/60 underline-offset-2 hover:text-amber-950"
+                      onClick={() => onJumpToField(row)}
+                    >
+                      Go to step
+                    </button>
+                  </>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
       <div>
         <h2 className="text-xl font-semibold text-zinc-900 sm:text-2xl">Review your answers</h2>
         <p className="mt-2 text-base leading-relaxed text-zinc-600">

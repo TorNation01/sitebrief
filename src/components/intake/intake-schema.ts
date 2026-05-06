@@ -1,8 +1,18 @@
 import type { FieldPath, UseFormReturn } from "react-hook-form";
 import { z } from "zod";
 
-import { BUDGET_RANGE_SLUGS } from "@/lib/sitebrief/budget-range";
 import type { SubmitWebsiteIntakePayload } from "@/types/database";
+
+/** Short single-line fields (labels, selects, one-liners). */
+export const INTAKE_SHORT_TEXT_MAX = 500;
+/** Long answers / textareas — generous to avoid false “too long” failures. */
+export const INTAKE_TEXTAREA_MAX = 12_000;
+
+/**
+ * Honeypot inputs must stay effectively empty. Browsers sometimes inject 1–2 characters via
+ * autofill/extensions; only treat as a bot when a field clearly has content (trimmed length).
+ */
+export const INTAKE_HONEYPOT_MIN_TRIGGER_CHARS = 4;
 
 export const SERVICES_OPTIONS = [
   "Web design",
@@ -40,77 +50,66 @@ export const AI_OPTIONS = [
   "Not sure",
 ] as const;
 
-const TEXT_SHORT = 500;
-const TEXT_MEDIUM = 4_000;
-const TEXT_LONG = 12_000;
-
-const optionalText = z.string().max(TEXT_LONG).default("");
+const optionalLongText = z.string().max(INTAKE_TEXTAREA_MAX).default("");
 
 export const intakeFormSchema = z.object({
-  contact_name: z.string().trim().min(1, "Contact name is required").max(200),
+  contact_name: z.string().trim().min(1, "Contact name is required").max(INTAKE_SHORT_TEXT_MAX),
   email: z
     .string()
     .trim()
     .min(1, "Email is required")
     .max(254, "Email is too long")
     .email("Enter a valid email address"),
-  phone: z.string().max(160).default(""),
-  website: z.string().max(2048).default(""),
-  business_name: z.string().trim().min(1, "Business name is required").max(240),
-  business_summary: optionalText,
+  phone: z.string().max(INTAKE_SHORT_TEXT_MAX).default(""),
+  website: z.string().max(INTAKE_TEXTAREA_MAX).default(""),
+  business_name: z.string().trim().min(1, "Business name is required").max(INTAKE_SHORT_TEXT_MAX),
+  business_summary: optionalLongText,
   services_selected: z.array(z.string()).default([]),
-  services_detail: optionalText,
-  ideal_customer: optionalText,
-  problem_solved: optionalText,
-  unique_value: optionalText,
-  website_goal: z
-    .string()
-    .trim()
-    .min(1, "Describe the primary goal for the new website")
-    .max(TEXT_MEDIUM),
-  desired_actions: optionalText,
-  success_metrics: optionalText,
-  pages_needed: optionalText,
-  content_status: optionalText,
+  services_detail: optionalLongText,
+  ideal_customer: optionalLongText,
+  problem_solved: optionalLongText,
+  unique_value: optionalLongText,
+  website_goal: optionalLongText,
+  desired_actions: optionalLongText,
+  success_metrics: optionalLongText,
+  pages_needed: optionalLongText,
+  content_status: optionalLongText,
   features_selected: z.array(z.string()).default([]),
-  features_detail: optionalText,
-  branding_status: optionalText,
-  brand_personality: optionalText,
-  liked_websites: optionalText,
-  disliked_websites: optionalText,
-  domain_status: optionalText,
-  hosting_status: optionalText,
-  platform_preference: optionalText,
+  features_detail: optionalLongText,
+  branding_status: optionalLongText,
+  brand_personality: optionalLongText,
+  liked_websites: optionalLongText,
+  disliked_websites: optionalLongText,
+  domain_status: optionalLongText,
+  hosting_status: optionalLongText,
+  platform_preference: optionalLongText,
   integrations_selected: z.array(z.string()).default([]),
-  integrations_detail: optionalText,
-  tone_of_voice: optionalText,
-  key_messages: optionalText,
-  offers: optionalText,
-  testimonials: optionalText,
-  compliance_needs: optionalText,
-  future_expansion: optionalText,
+  integrations_detail: optionalLongText,
+  tone_of_voice: optionalLongText,
+  key_messages: optionalLongText,
+  offers: optionalLongText,
+  testimonials: optionalLongText,
+  compliance_needs: optionalLongText,
+  future_expansion: optionalLongText,
   ai_selected: z.array(z.string()).default([]),
-  ai_detail: optionalText,
-  budget_range: z
-    .string()
-    .trim()
-    .min(1, "Select a budget range")
-    .max(TEXT_SHORT)
-    .refine((v) => (BUDGET_RANGE_SLUGS as readonly string[]).includes(v), { message: "Select a budget range" }),
-  deadline: optionalText.refine((value) => {
+  ai_detail: optionalLongText,
+  /** Accept any stored value (legacy slugs, free text, etc.). */
+  budget_range: z.string().max(INTAKE_SHORT_TEXT_MAX).default(""),
+  deadline: optionalLongText.refine((value) => {
     const t = value.trim();
     return !t.length || !Number.isNaN(Date.parse(t));
   }, "Enter a recognizable date or leave this blank"),
-  priority_level: optionalText,
-  extra_notes: optionalText,
+  /** Accept any option or blank. */
+  priority_level: z.string().max(INTAKE_SHORT_TEXT_MAX).default(""),
+  extra_notes: optionalLongText,
 });
 
 export const intakeFormSchemaWithHoneypot = intakeFormSchema.extend({
-  hp_company_url: z.string().max(280).default(""),
-  /** Second trap — autocomplete-attracting “role”; must stay blank. */
-  hp_department_role: z.string().max(280).default(""),
+  hp_company_url: z.string().max(INTAKE_SHORT_TEXT_MAX).default(""),
+  /** Second trap — must stay empty; real users should never paste content here. */
+  hp_department_role: z.string().max(INTAKE_SHORT_TEXT_MAX).default(""),
 }).superRefine((data, ctx) => {
-  if (data.hp_company_url.trim().length > 0) {
+  if (data.hp_company_url.trim().length >= INTAKE_HONEYPOT_MIN_TRIGGER_CHARS) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       message: "blocked",
@@ -118,7 +117,7 @@ export const intakeFormSchemaWithHoneypot = intakeFormSchema.extend({
     });
     return;
   }
-  if (data.hp_department_role.trim().length > 0) {
+  if (data.hp_department_role.trim().length >= INTAKE_HONEYPOT_MIN_TRIGGER_CHARS) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       message: "blocked",
@@ -319,6 +318,68 @@ export function applyZodIssuesToForm<TFieldValues extends Record<string, unknown
   }
 }
 
+function humanizeFieldKey(key: string): string {
+  return key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+/** Top-level form field from a Zod issue path (honeypots use their real field names). */
+function topLevelFieldFromIssuePath(path: readonly PropertyKey[]): string | null {
+  const head = path[0];
+  return typeof head === "string" ? head : null;
+}
+
+export type IntakeValidationIssueRow = {
+  fieldKey: string;
+  fieldLabel: string;
+  message: string;
+  stepIndex: number | null;
+};
+
+/**
+ * Turns a Zod error into rows we can show on the review step. Skips duplicate (field, message) pairs.
+ */
+export function formatIntakeValidationIssues(error: z.ZodError): IntakeValidationIssueRow[] {
+  const seen = new Set<string>();
+  const rows: IntakeValidationIssueRow[] = [];
+
+  for (const issue of error.issues) {
+    const fieldKey = topLevelFieldFromIssuePath(issue.path);
+    if (!fieldKey) {
+      const dedupe = `__root__:${issue.message}`;
+      if (seen.has(dedupe)) {
+        continue;
+      }
+      seen.add(dedupe);
+      rows.push({
+        fieldKey: "form",
+        fieldLabel: "Form",
+        message: issue.message,
+        stepIndex: null,
+      });
+      continue;
+    }
+
+    const dedupe = `${fieldKey}:${issue.message}`;
+    if (seen.has(dedupe)) {
+      continue;
+    }
+    seen.add(dedupe);
+
+    const stepIndex = INTAKE_STEPS.findIndex((definition) =>
+      (definition.fields as readonly string[]).includes(fieldKey),
+    );
+
+    rows.push({
+      fieldKey,
+      fieldLabel: humanizeFieldKey(fieldKey),
+      message: issue.message,
+      stepIndex: stepIndex >= 0 ? stepIndex : null,
+    });
+  }
+
+  return rows;
+}
+
 const CHECKBOX_LOOKUP = new Set<string>([
   ...SERVICES_OPTIONS,
   ...FEATURES_OPTIONS,
@@ -331,16 +392,16 @@ export function sanitizeIntakeSelections<T extends IntakeFormValues & { hp_compa
 ): T {
   return {
     ...values,
-    services_selected: values.services_selected.filter((entry) =>
+    services_selected: (values.services_selected ?? []).filter((entry) =>
       CHECKBOX_LOOKUP.has(entry),
     ),
-    features_selected: values.features_selected.filter((entry) =>
+    features_selected: (values.features_selected ?? []).filter((entry) =>
       CHECKBOX_LOOKUP.has(entry),
     ),
-    integrations_selected: values.integrations_selected.filter((entry) =>
+    integrations_selected: (values.integrations_selected ?? []).filter((entry) =>
       CHECKBOX_LOOKUP.has(entry),
     ),
-    ai_selected: values.ai_selected.filter((entry) =>
+    ai_selected: (values.ai_selected ?? []).filter((entry) =>
       CHECKBOX_LOOKUP.has(entry),
     ),
   };
@@ -390,7 +451,7 @@ export function buildIntakePayload(
       ideal_customer: emptyToNull(values.ideal_customer),
       problem_solved: emptyToNull(values.problem_solved),
       unique_value: emptyToNull(values.unique_value),
-      website_goal: values.website_goal.trim(),
+      website_goal: emptyToNull(values.website_goal ?? ""),
       desired_actions: emptyToNull(values.desired_actions),
       success_metrics: emptyToNull(values.success_metrics),
       pages_needed: emptyToNull(values.pages_needed),
@@ -417,7 +478,7 @@ export function buildIntakePayload(
       compliance_needs: emptyToNull(values.compliance_needs),
       future_expansion: emptyToNull(values.future_expansion),
       ai_features: mergeBullets(values.ai_selected, values.ai_detail),
-      budget_range: values.budget_range.trim(),
+      budget_range: (values.budget_range ?? "").trim().length ? (values.budget_range ?? "").trim() : null,
       deadline: deadlineIsoDateOrNull(values.deadline),
       priority_level: emptyToNull(values.priority_level),
       extra_notes: emptyToNull(values.extra_notes),
