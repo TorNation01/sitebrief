@@ -1,5 +1,6 @@
 import type { IntakeUxMode } from "@/components/intake/intake-ux-mode";
 import { INTAKE_STEPS } from "@/components/intake/intake-schema";
+import { BUDGET_RANGE_SIMPLE_LABELS, BUDGET_RANGE_SLUGS } from "@/lib/sitebrief/budget-range";
 
 type SelectChoice = {
   value: string;
@@ -100,8 +101,10 @@ const STEP_HEADER_COPY: Record<
   budget: {
     title: { technical: "Budget & timeline", simple: "Budget and timing" },
     description: {
-      technical: "Constraints that keep planning realistic.",
-      simple: "Rough budget band and when you would like to launch (if you know).",
+      technical:
+        "Bands mirror typical Starter → Custom project sizing (AUD). Pick the closest fit—final quotes follow the brief.",
+      simple:
+        "Rough investment band in Australian dollars, in plain language. Same bands we use when sizing a build—pick the closest match.",
     },
   },
   notes: {
@@ -180,12 +183,10 @@ const PRIORITY_SIMPLE: Record<string, { simple: string }> = {
 };
 
 const BUDGET_SIMPLE: Record<string, { simple: string }> = {
-  "": { simple: "Choose a budget band" },
-  "under-1500-aud": { simple: "Under about $1,500 AUD" },
-  "1500-3500-aud": { simple: "About $1,500–$3,500 AUD" },
-  "3500-7000-aud": { simple: "About $3,500–$7,000 AUD" },
-  "7000-15000-aud": { simple: "About $7,000–$15,000 AUD" },
-  "not-sure-yet": { simple: "Not sure yet—help me pick a band" },
+  "": { simple: "Choose the closest fit (all figures in AUD)" },
+  ...Object.fromEntries(
+    BUDGET_RANGE_SLUGS.map((slug) => [slug, { simple: BUDGET_RANGE_SIMPLE_LABELS[slug] }]),
+  ),
 };
 
 export function getContentStatusOptions(

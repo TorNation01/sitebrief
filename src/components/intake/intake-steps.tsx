@@ -895,8 +895,8 @@ export function IntakeStepFields({ stepIndex }: { stepIndex: number }) {
             id="budget_range"
             label={L("Budget allocation for this chapter", "Rough project budget")}
             hint={L(
-              "Ranges are directional—helps triage sequencing and partner fit.",
-              "Approximate range in AUD—helps us suggest a realistic path.",
+              "Each option matches a typical project tier (Starter through Custom) in AUD—same scale we use when estimating from your answers.",
+              "Pick the band that feels closest. Amounts are in Australian dollars and line up with how we usually scope builds.",
             )}
             fieldName="budget_range"
             options={getBudgetOptions(mode, BUDGET_OPTIONS)}
